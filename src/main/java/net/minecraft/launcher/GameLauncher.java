@@ -122,7 +122,20 @@ public class GameLauncher
                 return;
             }
 
-   /*if (!this.version.appliesToCurrentEnvironment()) {
+      if ((syncInfo.getRemoteVersion() != null) && (syncInfo.getLatestSource() != VersionSyncInfo.VersionSource.REMOTE) && (!this.version.isSynced())) {
+        try {
+          CompleteVersion remoteVersion = this.launcher.getVersionManager().getRemoteVersionList().getCompleteVersion(syncInfo.getRemoteVersion());
+          this.launcher.getVersionManager().getLocalVersionList().removeVersion(this.version);
+          this.launcher.getVersionManager().getLocalVersionList().addVersion(remoteVersion);
+          ((LocalVersionList)this.launcher.getVersionManager().getLocalVersionList()).saveVersion(remoteVersion);
+          this.version = remoteVersion;
+        } catch (IOException e) {
+          Launcher.getInstance().println("Couldn't sync local and remote versions", e);
+        }
+        this.version.setSynced(true);
+      }
+   
+/*if (!this.version.appliesToCurrentEnvironment()) {
         String reason = this.version.getIncompatibilityReason();
         if (reason == null) reason = "This version is incompatible with your computer. Please try another one by going into Edit Profile and selecting one through the dropdown. Sorry!";
         Launcher.getInstance().println("Version " + this.version.getId() + " is incompatible with current environment: " + reason);
@@ -542,5 +555,3 @@ public class GameLauncher
         }
     }
 }
-
-

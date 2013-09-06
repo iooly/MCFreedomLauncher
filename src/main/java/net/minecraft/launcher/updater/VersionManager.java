@@ -40,8 +40,10 @@ public class VersionManager {
         synchronized (this.refreshLock) {
             this.isRefreshing = true;
         }
-        try {
+    try {
+      Launcher.getInstance().println("Refreshing local version list...");
             this.localVersionList.refreshVersions();
+      Launcher.getInstance().println("Refreshing remote version list...");
             this.remoteVersionList.refreshVersions();
         } catch (IOException ex) {
             synchronized (this.refreshLock) {
@@ -50,23 +52,7 @@ public class VersionManager {
             throw ex;
         }
 
-        if ((this.localVersionList instanceof LocalVersionList)) {
-            for (Version version : this.remoteVersionList.getVersions()) {
-                String id = version.getId();
-                if (this.localVersionList.getVersion(id) != null) {
-                    this.localVersionList.removeVersion(id);
-                    this.localVersionList.addVersion(this.remoteVersionList.getCompleteVersion(id));
-                    try {
-                        ((LocalVersionList) this.localVersionList).saveVersion(this.localVersionList.getCompleteVersion(id));
-                    } catch (IOException ex) {
-                        synchronized (this.refreshLock) {
-                            this.isRefreshing = false;
-                        }
-                        throw ex;
-                    }
-                }
-            }
-        }
+    Launcher.getInstance().println("Refresh complete.");
 
         synchronized (this.refreshLock) {
             this.isRefreshing = false;
@@ -302,5 +288,3 @@ public class VersionManager {
         this.refreshedVersionsListeners.remove(listener);
     }
 }
-
-
