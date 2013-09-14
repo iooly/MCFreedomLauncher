@@ -1,6 +1,7 @@
 package net.minecraft.launcher.ui.popups.profile;
 
 import net.minecraft.launcher.events.RefreshedVersionsListener;
+import net.minecraft.launcher.locale.LocaleHelper;
 import net.minecraft.launcher.profile.Profile;
 import net.minecraft.launcher.updater.VersionManager;
 import net.minecraft.launcher.updater.VersionSyncInfo;
@@ -12,15 +13,15 @@ import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.text.MessageFormat;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class ProfileVersionPanel extends JPanel
   implements RefreshedVersionsListener
 {
-  private final ProfileEditorPopup editor;
+    private ResourceBundle resourceBundle= LocaleHelper.getMessages();
+    private final ProfileEditorPopup editor;
   private final JComboBox versionList = new JComboBox();
   private final List<ReleaseTypeCheckBox> customVersionTypes = new ArrayList();
 
@@ -28,7 +29,7 @@ public class ProfileVersionPanel extends JPanel
     this.editor = editor;
 
     setLayout(new GridBagLayout());
-    setBorder(BorderFactory.createTitledBorder("Version Selection"));
+    setBorder(BorderFactory.createTitledBorder(resourceBundle.getString("version.selection")));
 
     createInterface();
     addEventHandlers();
@@ -66,7 +67,7 @@ public class ProfileVersionPanel extends JPanel
         constraints.gridy += 1;
       }
     }
-    add(new JLabel("Use version:"), constraints);
+    add(new JLabel(resourceBundle.getString("use.version")), constraints);
     constraints.fill = 2;
     constraints.weightx = 1.0D;
     add(this.versionList, constraints);
@@ -93,7 +94,7 @@ public class ProfileVersionPanel extends JPanel
         {
           if (this.isUpdating) return;
           if ((e.getStateChange() == 1) && (type.getType().getPopupWarning() != null)) {
-            int result = JOptionPane.showConfirmDialog(ProfileVersionPanel.this.editor.getLauncher().getFrame(), type.getType().getPopupWarning() + "\n\nAre you sure you want to continue?");
+            int result = JOptionPane.showConfirmDialog(ProfileVersionPanel.this.editor.getLauncher().getFrame(), MessageFormat.format("{0}\n\n"+resourceBundle.getString("0.n.nare.you.sure.you.want.to.continue"), type.getType().getPopupWarning()));
 
             this.isUpdating = true;
             if (result == 0) {
@@ -149,7 +150,7 @@ public class ProfileVersionPanel extends JPanel
     VersionSyncInfo selected = null;
 
     this.versionList.removeAllItems();
-    this.versionList.addItem("Use Latest Version");
+    this.versionList.addItem(resourceBundle.getString("use.latest.version"));
 
     for (VersionSyncInfo version : versions) {
       if (version.getLatestVersion().getId().equals(previous)) {

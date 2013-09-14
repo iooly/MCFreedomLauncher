@@ -3,6 +3,7 @@ package net.minecraft.launcher.ui.tabs;
 import net.minecraft.launcher.Launcher;
 import net.minecraft.launcher.OperatingSystem;
 import net.minecraft.launcher.events.RefreshedVersionsListener;
+import net.minecraft.launcher.locale.LocaleHelper;
 import net.minecraft.launcher.updater.VersionManager;
 import net.minecraft.launcher.updater.VersionSyncInfo;
 import net.minecraft.launcher.versions.CompleteVersion;
@@ -10,13 +11,11 @@ import net.minecraft.launcher.versions.Version;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class VersionListTab extends JScrollPane
         implements RefreshedVersionsListener {
+    private ResourceBundle resourceBundle= LocaleHelper.getMessages();
     private static final int COLUMN_NAME = 0;
     private static final int COLUMN_TYPE = 1;
     private static final int COLUMN_RELEASE_DATE = 2;
@@ -27,6 +26,7 @@ public class VersionListTab extends JScrollPane
     private final Launcher launcher;
     private final VersionTableModel dataModel = new VersionTableModel();
     private final JTable table = new JTable(this.dataModel);
+
 
     public VersionListTab(Launcher launcher) {
         this.launcher = launcher;
@@ -79,17 +79,18 @@ public class VersionListTab extends JScrollPane
         public String getColumnName(int column) {
             switch (column) {
                 case 3:
-                    return "Last modified";
+
+                    return resourceBundle.getString("last.modified");
                 case 1:
-                    return "Version type";
+                    return resourceBundle.getString("version.type");
                 case 4:
-                    return "Library count";
+                    return resourceBundle.getString("library.count");
                 case 0:
-                    return "Version name";
+                    return resourceBundle.getString("version.name");
                 case 5:
-                    return "Sync status";
+                    return resourceBundle.getString("sync.status");
                 case 2:
-                    return "Release Date";
+                    return resourceBundle.getString("release.date");
             }
             return super.getColumnName(column);
         }
@@ -119,12 +120,12 @@ public class VersionListTab extends JScrollPane
                     VersionSyncInfo syncInfo = VersionListTab.this.launcher.getVersionManager().getVersionSyncInfo(version);
                     if (syncInfo.isOnRemote()) {
                         if (syncInfo.isUpToDate()) {
-                            return "Up to date with remote";
+                            return resourceBundle.getString("up.to.date.with.remote");
                         }
-                        return "Update avail from remote";
+                        return resourceBundle.getString("update.avail.from.remote");
                     }
 
-                    return "Local only";
+                    return resourceBundle.getString("local.only");
                 case 1:
                     return version.getType().getName();
                 case 2:
