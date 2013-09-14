@@ -5,6 +5,7 @@ import net.minecraft.launcher.LauncherConstants;
 import net.minecraft.launcher.authentication.AuthenticationDatabase;
 import net.minecraft.launcher.authentication.AuthenticationService;
 import net.minecraft.launcher.events.RefreshedProfilesListener;
+import net.minecraft.launcher.locale.LocaleHelper;
 import net.minecraft.launcher.profile.Profile;
 import net.minecraft.launcher.profile.ProfileManager;
 import net.minecraft.launcher.ui.popups.profile.ProfileEditorPopup;
@@ -21,9 +22,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.ResourceBundle;
 
 public class ProfileListTab extends JScrollPane
         implements RefreshedProfilesListener {
+    private ResourceBundle resourceBundle= LocaleHelper.getMessages();
     private static final int COLUMN_NAME = 0;
     private static final int COLUMN_VERSION = 1;
     private static final int COLUMN_AUTHENTICATION = 2;
@@ -32,9 +35,9 @@ public class ProfileListTab extends JScrollPane
     private final ProfileTableModel dataModel = new ProfileTableModel();
     private final JTable table = new JTable(this.dataModel);
     private final JPopupMenu popupMenu = new JPopupMenu();
-    private final JMenuItem addProfileButton = new JMenuItem("Add Profile");
-    private final JMenuItem copyProfileButton = new JMenuItem("Copy Profile");
-    private final JMenuItem deleteProfileButton = new JMenuItem("Delete Profile");
+    private final JMenuItem addProfileButton = new JMenuItem(resourceBundle.getString("add.profile"));
+    private final JMenuItem copyProfileButton = new JMenuItem(resourceBundle.getString("copy.profile"));
+    private final JMenuItem deleteProfileButton = new JMenuItem(resourceBundle.getString("delete.profile"));
 
     public ProfileListTab(Launcher launcher) {
         this.launcher = launcher;
@@ -103,7 +106,7 @@ public class ProfileListTab extends JScrollPane
 
                 Profile current = (Profile) ProfileListTab.this.dataModel.profiles.get(selection);
 
-                int result = JOptionPane.showOptionDialog(ProfileListTab.this.launcher.getFrame(), "Are you sure you want to delete this profile?", "Profile Confirmation", 0, 2, null, LauncherConstants.CONFIRM_PROFILE_DELETION_OPTIONS, LauncherConstants.CONFIRM_PROFILE_DELETION_OPTIONS[0]);
+                int result = JOptionPane.showOptionDialog(ProfileListTab.this.launcher.getFrame(), resourceBundle.getString("are.you.sure.you.want.to.delete.this.profile"), resourceBundle.getString("profile.confirmation"), 0, 2, null, LauncherConstants.CONFIRM_PROFILE_DELETION_OPTIONS, LauncherConstants.CONFIRM_PROFILE_DELETION_OPTIONS[0]);
 
                 if (result == 0) {
                     ProfileListTab.this.launcher.getProfileManager().getProfiles().remove(current.getName());
@@ -188,11 +191,11 @@ public class ProfileListTab extends JScrollPane
         public String getColumnName(int column) {
             switch (column) {
                 case 2:
-                    return "Username";
+                    resourceBundle.getString("username");
                 case 1:
-                    return "Version";
+                    return resourceBundle.getString("version");
                 case 0:
-                    return "Version name";
+                    return resourceBundle.getString("version.name");
             }
             return super.getColumnName(column);
         }

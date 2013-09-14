@@ -1,9 +1,11 @@
 package net.minecraft.launcher.ui.tabs;
 
 import net.minecraft.launcher.Launcher;
+import net.minecraft.launcher.locale.LocaleHelper;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ResourceBundle;
 
 public class LauncherTabPanel extends JTabbedPane {
     private final Launcher launcher;
@@ -11,6 +13,7 @@ public class LauncherTabPanel extends JTabbedPane {
     private final ConsoleTab console;
     private final ReadmeTab readme;
     private CrashReportTab crashReportTab;
+    private ResourceBundle resourceBundle= LocaleHelper.getMessages();
 
     public LauncherTabPanel(Launcher launcher) {
         super(1);
@@ -24,11 +27,11 @@ public class LauncherTabPanel extends JTabbedPane {
     }
 
     protected void createInterface() {
-        addTab("Update Notes", this.blog);
-        addTab("Development Console", this.console);
-        addTab("Profile Editor", new ProfileListTab(this.launcher));
-        addTab("Local Version Editor (NYI)", new VersionListTab(this.launcher));
-        addTab("Readme",this.readme);
+        addTab(resourceBundle.getString("update.notes"), this.blog);
+        addTab(resourceBundle.getString("development.console"), this.console);
+        addTab(resourceBundle.getString("profile.editor"), new ProfileListTab(this.launcher));
+        addTab(resourceBundle.getString("local.version.editor.nyi"), new VersionListTab(this.launcher));
+        addTab(resourceBundle.getString("readme"),this.readme);
     }
 
     public Launcher getLauncher() {
@@ -54,7 +57,7 @@ public class LauncherTabPanel extends JTabbedPane {
     public void setCrashReport(CrashReportTab newTab) {
         if (this.crashReportTab != null) removeTab(this.crashReportTab);
         this.crashReportTab = newTab;
-        addTab("Crash Report", this.crashReportTab);
+        addTab(resourceBundle.getString("crash.report"), this.crashReportTab);
         setSelectedComponent(newTab);
     }
 

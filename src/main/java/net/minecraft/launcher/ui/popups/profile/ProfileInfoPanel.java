@@ -1,5 +1,6 @@
 package net.minecraft.launcher.ui.popups.profile;
 
+import net.minecraft.launcher.locale.LocaleHelper;
 import net.minecraft.launcher.profile.LauncherVisibilityRule;
 import net.minecraft.launcher.profile.Profile;
 
@@ -10,29 +11,31 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
+import java.util.ResourceBundle;
 
 public class ProfileInfoPanel extends JPanel
     //    implements RefreshedVersionsListener 
 {
+    private ResourceBundle resourceBundle= LocaleHelper.getMessages();
     private final ProfileEditorPopup editor;
-    private final JCheckBox gameDirCustom = new JCheckBox("Game Directory:");
+    private final JCheckBox gameDirCustom = new JCheckBox(resourceBundle.getString("game.directory"));
     private final JTextField profileName = new JTextField();
     private final JTextField gameDirField = new JTextField();
     //private final JComboBox versionList = new JComboBox();
-    private final JCheckBox resolutionCustom = new JCheckBox("Resolution:");
+    private final JCheckBox resolutionCustom = new JCheckBox(resourceBundle.getString("resolution"));
     private final JTextField resolutionWidth = new JTextField();
     private final JTextField resolutionHeight = new JTextField();
     //private final JCheckBox allowSnapshots = new JCheckBox("Enable experimental development versions (\"snapshots\")");
     //private final JComboBox<Locale> langList = new JComboBox<Locale>(LocaleHelper.getLocales());
-    private final JCheckBox useHopper = new JCheckBox("Automatically ask Mojang for assistance with fixing crashes");
-    private final JCheckBox launcherVisibilityCustom = new JCheckBox("Launcher Visibility:");
+    private final JCheckBox useHopper = new JCheckBox(resourceBundle.getString("automatically.ask.mojang.for.assistance.with.fixing.crashes"));
+    private final JCheckBox launcherVisibilityCustom = new JCheckBox(resourceBundle.getString("launcher.visibility"));
     private final JComboBox launcherVisibilityOption = new JComboBox();
 
     public ProfileInfoPanel(ProfileEditorPopup editor) {
         this.editor = editor;
 
         setLayout(new GridBagLayout());
-        setBorder(BorderFactory.createTitledBorder("Profile Info"));
+        setBorder(BorderFactory.createTitledBorder(resourceBundle.getString("profile.info")));
 
         createInterface();
         fillDefaultValues();
@@ -54,7 +57,7 @@ public class ProfileInfoPanel extends JPanel
 
         constraints.gridy = 0;
 
-        add(new JLabel("Profile Name:"), constraints);
+        add(new JLabel(resourceBundle.getString("profile.name")), constraints);
         constraints.fill = 2;
         constraints.weightx = 1.0D;
         add(this.profileName, constraints);

@@ -2,6 +2,7 @@ package net.minecraft.launcher.ui.bottombar;
 
 import net.minecraft.launcher.Launcher;
 import net.minecraft.launcher.events.RefreshedProfilesListener;
+import net.minecraft.launcher.locale.LocaleHelper;
 import net.minecraft.launcher.profile.Profile;
 import net.minecraft.launcher.profile.ProfileManager;
 import net.minecraft.launcher.ui.popups.profile.ProfileEditorPopup;
@@ -16,12 +17,14 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.ResourceBundle;
 
 public class ProfileSelectionPanel extends JPanel
         implements ActionListener, ItemListener, RefreshedProfilesListener {
+    private ResourceBundle resourceBundle= LocaleHelper.getMessages();
     private final JComboBox profileList = new JComboBox();
-    private final JButton newProfileButton = new JButton("New Profile");
-    private final JButton editProfileButton = new JButton("Edit Profile");
+    private final JButton newProfileButton = new JButton(resourceBundle.getString("new.profile"));
+    private final JButton editProfileButton = new JButton(resourceBundle.getString("edit.profile"));
     private final Launcher launcher;
     private boolean skipSelectionUpdate;
 
@@ -30,7 +33,7 @@ public class ProfileSelectionPanel extends JPanel
 
         this.profileList.setRenderer(new ProfileListRenderer());
         this.profileList.addItemListener(this);
-        this.profileList.addItem("Loading profiles...");
+        this.profileList.addItem(resourceBundle.getString("loading.profiles"));
 
         this.newProfileButton.addActionListener(this);
         this.editProfileButton.addActionListener(this);
@@ -48,7 +51,7 @@ public class ProfileSelectionPanel extends JPanel
 
         constraints.gridy = 0;
 
-        add(new JLabel("Profile: "), constraints);
+        add(new JLabel(resourceBundle.getString("profile")), constraints);
         constraints.gridx = 1;
         add(this.profileList, constraints);
         constraints.gridx = 0;

@@ -34,9 +34,9 @@ public class LauncherPanel extends JPanel {
     }
 
     protected void createInterface() {
-        add(createLauncherInterface(), "launcher");
-        add(createDirtInterface(), "loading");
-        add(createLoginInterface(), "login");
+        add(createLauncherInterface(), CARD_LAUNCHER);
+        add(createDirtInterface(), CARD_DIRT_BACKGROUND);
+        add(createLoginInterface(), CARD_LOGIN);
     }
 
     protected JPanel createLauncherInterface() {

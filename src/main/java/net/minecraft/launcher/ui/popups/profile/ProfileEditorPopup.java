@@ -1,6 +1,7 @@
 package net.minecraft.launcher.ui.popups.profile;
 
 import net.minecraft.launcher.Launcher;
+import net.minecraft.launcher.locale.LocaleHelper;
 import net.minecraft.launcher.profile.Profile;
 import net.minecraft.launcher.profile.ProfileManager;
 
@@ -12,14 +13,16 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 public class ProfileEditorPopup extends JPanel
         implements ActionListener {
     private final Launcher launcher;
     private final Profile originalProfile;
     private final Profile profile;
-    private final JButton saveButton = new JButton("Save Profile");
-    private final JButton cancelButton = new JButton("Cancel");
+    private ResourceBundle resourceBundle= LocaleHelper.getMessages();
+    private final JButton saveButton = new JButton(resourceBundle.getString("save.profile"));
+    private final JButton cancelButton = new JButton(resourceBundle.getString("cancel"));
     private final ProfileInfoPanel profileInfoPanel;
   private final ProfileVersionPanel profileVersionPanel;
     private final ProfileJavaPanel javaInfoPanel;
@@ -97,7 +100,7 @@ public class ProfileEditorPopup extends JPanel
     }
 
     public static void showEditProfileDialog(Launcher launcher, Profile profile) {
-        JDialog dialog = new JDialog(launcher.getFrame(), "Profile Editor", true);
+        JDialog dialog = new JDialog(launcher.getFrame(), LocaleHelper.getMessages().getString("profile.editor"), true);
         ProfileEditorPopup editor = new ProfileEditorPopup(launcher, profile);
         dialog.add(editor);
         //dialog.setPreferredSize(new Dimension(450, 300));
