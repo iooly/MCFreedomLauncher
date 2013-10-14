@@ -20,11 +20,11 @@ public class ProfileEditorPopup extends JPanel
     private final Launcher launcher;
     private final Profile originalProfile;
     private final Profile profile;
-    private ResourceBundle resourceBundle= LocaleHelper.getMessages();
+    private ResourceBundle resourceBundle = LocaleHelper.getMessages();
     private final JButton saveButton = new JButton(resourceBundle.getString("save.profile"));
     private final JButton cancelButton = new JButton(resourceBundle.getString("cancel"));
     private final ProfileInfoPanel profileInfoPanel;
-  private final ProfileVersionPanel profileVersionPanel;
+    private final ProfileVersionPanel profileVersionPanel;
     private final ProfileJavaPanel javaInfoPanel;
 
     public ProfileEditorPopup(Launcher launcher, Profile profile) {
@@ -34,7 +34,7 @@ public class ProfileEditorPopup extends JPanel
         this.originalProfile = profile;
         this.profile = new Profile(profile);
         this.profileInfoPanel = new ProfileInfoPanel(this);
-    this.profileVersionPanel = new ProfileVersionPanel(this);
+        this.profileVersionPanel = new ProfileVersionPanel(this);
         this.javaInfoPanel = new ProfileJavaPanel(this);
 
         this.saveButton.addActionListener(this);
@@ -49,7 +49,7 @@ public class ProfileEditorPopup extends JPanel
         JPanel standardPanels = new JPanel(true);
         standardPanels.setLayout(new BoxLayout(standardPanels, 1));
         standardPanels.add(this.profileInfoPanel);
-    standardPanels.add(this.profileVersionPanel);
+        standardPanels.add(this.profileVersionPanel);
         standardPanels.add(this.javaInfoPanel);
 
         add(standardPanels, "Center");
@@ -76,7 +76,7 @@ public class ProfileEditorPopup extends JPanel
                     }
                 }
 
-               // this.profile.refreshUUID();
+                // this.profile.refreshUUID();
 
                 profiles.put(this.profile.getName(), this.profile);
 

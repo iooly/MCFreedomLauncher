@@ -129,6 +129,10 @@ public abstract class BaseAuthenticationService
         return result;
     }
 
+    public String getAccessToken() {
+        return "-";
+    }
+
     public boolean shouldRememberMe() {
         return this.shouldRememberMe;
     }

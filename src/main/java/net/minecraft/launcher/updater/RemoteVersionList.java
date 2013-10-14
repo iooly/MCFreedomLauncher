@@ -19,9 +19,8 @@ public class RemoteVersionList extends VersionList {
         return true;
     }
 
-  protected String getContent(String path) throws IOException
-  {
-    return Http.performGet(new URL("https://s3.amazonaws.com/Minecraft.Download/" + path), this.proxy);
+    protected String getContent(String path) throws IOException {
+        return Http.performGet(new URL("https://s3.amazonaws.com/Minecraft.Download/" + path), this.proxy);
     }
 
     public Proxy getProxy() {

@@ -12,7 +12,7 @@ import java.net.URL;
 /**
  * Created by Energy on 13年7月23日.
  */
-public class ReadmeTab extends JScrollPane{
+public class ReadmeTab extends JScrollPane {
     private final JTextPane readme = new JTextPane();
     private final Launcher launcher;
 

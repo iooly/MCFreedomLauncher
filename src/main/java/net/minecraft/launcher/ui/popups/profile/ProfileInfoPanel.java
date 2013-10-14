@@ -14,9 +14,9 @@ import java.io.File;
 import java.util.ResourceBundle;
 
 public class ProfileInfoPanel extends JPanel
-    //    implements RefreshedVersionsListener 
+        //    implements RefreshedVersionsListener
 {
-    private ResourceBundle resourceBundle= LocaleHelper.getMessages();
+    private ResourceBundle resourceBundle = LocaleHelper.getMessages();
     private final ProfileEditorPopup editor;
     private final JCheckBox gameDirCustom = new JCheckBox(resourceBundle.getString("game.directory"));
     private final JTextField profileName = new JTextField();
@@ -165,7 +165,7 @@ public class ProfileInfoPanel extends JPanel
         this.resolutionHeight.setText(String.valueOf(resolution.getHeight()));
         updateResolutionState();
 
-   //     this.allowSnapshots.setSelected(this.editor.getProfile().getVersionFilter().getTypes().contains(ReleaseType.SNAPSHOT));
+        //     this.allowSnapshots.setSelected(this.editor.getProfile().getVersionFilter().getTypes().contains(ReleaseType.SNAPSHOT));
 
         this.useHopper.setSelected(this.editor.getProfile().getUseHopperCrashService());
 
@@ -180,7 +180,7 @@ public class ProfileInfoPanel extends JPanel
         }
         updateLauncherVisibilityState();
 
-  //      this.langList.setSelectedIndex(0);
+        //      this.langList.setSelectedIndex(0);
 
     }
 
@@ -216,8 +216,7 @@ public class ProfileInfoPanel extends JPanel
                 ProfileInfoPanel.this.updateGameDir();
             }
         });
-    this.resolutionCustom.addItemListener(new ItemListener()
-    {
+        this.resolutionCustom.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 ProfileInfoPanel.this.updateResolutionState();
             }
@@ -238,8 +237,7 @@ public class ProfileInfoPanel extends JPanel
         this.resolutionWidth.getDocument().addDocumentListener(resolutionListener);
         this.resolutionHeight.getDocument().addDocumentListener(resolutionListener);
 
-    this.useHopper.addItemListener(new ItemListener()
-    {
+        this.useHopper.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 ProfileInfoPanel.this.updateHopper();
             }
@@ -290,8 +288,7 @@ public class ProfileInfoPanel extends JPanel
             profile.setUseHopperCrashService(false);
     }
 
-  private void updateProfileName()
-  {
+    private void updateProfileName() {
         if (this.profileName.getText().length() > 0)
             this.editor.getProfile().setName(this.profileName.getText());
     }
@@ -333,4 +330,4 @@ public class ProfileInfoPanel extends JPanel
         File file = new File(this.gameDirField.getText());
         this.editor.getProfile().setGameDir(file);
     }
-    }
+}

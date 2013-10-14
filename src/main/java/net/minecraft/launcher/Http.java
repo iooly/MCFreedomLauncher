@@ -40,17 +40,17 @@ public class Http {
         return Util.performPost(url, buildQuery(query), proxy, "application/x-www-form-urlencoded", false);
     }
 
-  public static String performGet(URL url, Proxy proxy) throws IOException {
+    public static String performGet(URL url, Proxy proxy) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
         connection.setConnectTimeout(15000);
-    connection.setReadTimeout(60000);
-    connection.setRequestMethod("GET");
+        connection.setReadTimeout(60000);
+        connection.setRequestMethod("GET");
 
-    InputStream inputStream = connection.getInputStream();
+        InputStream inputStream = connection.getInputStream();
         try {
-      return IOUtils.toString(inputStream);
-    } finally {
-      IOUtils.closeQuietly(inputStream);
+            return IOUtils.toString(inputStream);
+        } finally {
+            IOUtils.closeQuietly(inputStream);
         }
     }
 

@@ -197,7 +197,6 @@ public class SPAuthenticationService implements AuthenticationService {
         this.shouldRememberMe = rememberMe;
     }
 
-
     @Override
     public String getSessionToken() {
         return this.sessionToken;
@@ -205,6 +204,10 @@ public class SPAuthenticationService implements AuthenticationService {
 
     public void setSessionToken(String sessionToken) {
         this.sessionToken = sessionToken;
+    }
+
+    public String getAccessToken() {
+        return "-";
     }
 
     @Override

@@ -69,6 +69,10 @@ public class LoadTestingAuthenticationService
         return this.primary.getSessionToken();
     }
 
+    public String getAccessToken() {
+        return this.primary.getAccessToken();
+    }
+
     public String getUsername() {
         return this.primary.getUsername();
     }

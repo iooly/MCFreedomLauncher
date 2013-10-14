@@ -53,7 +53,7 @@ public abstract class VersionList {
         if ((version instanceof CompleteVersion)) return (CompleteVersion) version;
         if (version == null) throw new IllegalArgumentException("Version cannot be null");
 
-    CompleteVersion complete = (CompleteVersion)this.gson.fromJson(getContent("versions/" + version.getId() + "/" + version.getId() + ".json"), CompleteVersion.class);
+        CompleteVersion complete = (CompleteVersion) this.gson.fromJson(getContent("versions/" + version.getId() + "/" + version.getId() + ".json"), CompleteVersion.class);
         ReleaseType type = version.getType();
 
         Collections.replaceAll(this.versions, version, complete);
@@ -75,7 +75,7 @@ public abstract class VersionList {
     public void refreshVersions() throws IOException {
         clearCache();
 
-    RawVersionList versionList = (RawVersionList)this.gson.fromJson(getContent("versions/versions.json"), RawVersionList.class);
+        RawVersionList versionList = (RawVersionList) this.gson.fromJson(getContent("versions/versions.json"), RawVersionList.class);
 
         for (Version version : versionList.getVersions()) {
             this.versions.add(version);

@@ -13,7 +13,7 @@ public class LauncherTabPanel extends JTabbedPane {
     private final ConsoleTab console;
     private final ReadmeTab readme;
     private CrashReportTab crashReportTab;
-    private ResourceBundle resourceBundle= LocaleHelper.getMessages();
+    private ResourceBundle resourceBundle = LocaleHelper.getMessages();
 
     public LauncherTabPanel(Launcher launcher) {
         super(1);
@@ -21,7 +21,7 @@ public class LauncherTabPanel extends JTabbedPane {
         this.launcher = launcher;
         this.blog = new WebsiteTab(launcher);
         this.console = new ConsoleTab(launcher);
-        this.readme=new ReadmeTab(launcher);
+        this.readme = new ReadmeTab(launcher);
 
         createInterface();
     }
@@ -31,7 +31,7 @@ public class LauncherTabPanel extends JTabbedPane {
         addTab(resourceBundle.getString("development.console"), this.console);
         addTab(resourceBundle.getString("profile.editor"), new ProfileListTab(this.launcher));
         addTab(resourceBundle.getString("local.version.editor.nyi"), new VersionListTab(this.launcher));
-        addTab(resourceBundle.getString("readme"),this.readme);
+        addTab(resourceBundle.getString("readme"), this.readme);
     }
 
     public Launcher getLauncher() {

@@ -18,7 +18,7 @@ import java.util.ResourceBundle;
 
 public class LogInPopup extends JPanel
         implements ActionListener {
-    private ResourceBundle resourceBundle= LocaleHelper.getMessages();
+    private ResourceBundle resourceBundle = LocaleHelper.getMessages();
     private final Launcher launcher;
     private final Callback callback;
     private final AuthErrorForm errorForm;

@@ -15,7 +15,7 @@ import java.util.*;
 
 public class VersionListTab extends JScrollPane
         implements RefreshedVersionsListener {
-    private ResourceBundle resourceBundle= LocaleHelper.getMessages();
+    private ResourceBundle resourceBundle = LocaleHelper.getMessages();
     private static final int COLUMN_NAME = 0;
     private static final int COLUMN_TYPE = 1;
     private static final int COLUMN_RELEASE_DATE = 2;

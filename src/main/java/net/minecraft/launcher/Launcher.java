@@ -87,7 +87,7 @@ public class Launcher {
         //refreshVersions();
         refreshVersionsAndProfiles();
 
-        println("Launcher "+LauncherConstants.VERSION_NAME+" (through bootstrap " + bootstrapVersion + ") started on " + OperatingSystem.getCurrentPlatform().getName() + "...");
+        println("Launcher " + LauncherConstants.VERSION_NAME + " (through bootstrap " + bootstrapVersion + ") started on " + OperatingSystem.getCurrentPlatform().getName() + "...");
         println("Current time is " + DateFormat.getDateTimeInstance(2, 2, Locale.US).format(new Date()));
         println("Current Locale is " + LocaleHelper.getCurrentLocale());
         if (!OperatingSystem.getCurrentPlatform().isSupported()) {
@@ -362,8 +362,8 @@ public class Launcher {
 
     protected void initializeFrame() {
         this.frame.getContentPane().removeAll();
-        this.frame.setTitle("Minecraft Freedom Launcher "+LauncherConstants.VERSION_NAME+" [by Energy]");
-        this.frame.setPreferredSize(new Dimension(925, 525));
+        this.frame.setTitle("Minecraft Freedom Launcher " + LauncherConstants.VERSION_NAME + " [by Energy]");
+        this.frame.setPreferredSize(new Dimension(950, 525));
         this.frame.setDefaultCloseOperation(2);
 
         this.frame.addWindowListener(new WindowAdapter() {

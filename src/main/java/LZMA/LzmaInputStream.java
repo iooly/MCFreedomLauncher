@@ -4,8 +4,7 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class LzmaInputStream extends FilterInputStream
-{
+public class LzmaInputStream extends FilterInputStream {
     boolean isClosed;
     CRangeDecoder RangeDecoder;
     byte[] dictionary;
@@ -54,8 +53,7 @@ public class LzmaInputStream extends FilterInputStream
     static final int Literal = 1846;
 
     public LzmaInputStream(InputStream paramInputStream)
-            throws IOException
-    {
+            throws IOException {
         super(paramInputStream);
 
         isClosed = false;
@@ -65,8 +63,7 @@ public class LzmaInputStream extends FilterInputStream
         fill_buffer();
     }
 
-    private void LzmaDecode(int paramInt) throws IOException
-    {
+    private void LzmaDecode(int paramInt) throws IOException {
         int j = (1 << pb) - 1;
         int k = (1 << lp) - 1;
 
@@ -79,7 +76,9 @@ public class LzmaInputStream extends FilterInputStream
             m = dictionaryPos - rep0;
             if (m < 0)
                 m += dictionarySize;
-            byte tmp103_102 = dictionary[m]; dictionary[dictionaryPos] = tmp103_102; uncompressed_buffer[(uncompressed_size++)] = tmp103_102;
+            byte tmp103_102 = dictionary[m];
+            dictionary[dictionaryPos] = tmp103_102;
+            uncompressed_buffer[(uncompressed_size++)] = tmp103_102;
             if (++dictionaryPos == dictionarySize)
                 dictionaryPos = 0;
             RemainLen -= 1;
@@ -120,13 +119,11 @@ public class LzmaInputStream extends FilterInputStream
                 dictionary[dictionaryPos] = (byte) i;
                 if (++dictionaryPos == dictionarySize)
                     dictionaryPos = 0;
-            }
-            else {
+            } else {
                 PreviousIsMatch = true;
                 if (RangeDecoder.BitDecode(probs, 192 + State) == 1) {
                     if (RangeDecoder.BitDecode(probs, 204 + State) == 0) {
-                        if (RangeDecoder.BitDecode(probs, 240 + (State << 4) + m) == 0)
-                        {
+                        if (RangeDecoder.BitDecode(probs, 240 + (State << 4) + m) == 0) {
                             if (uncompressed_size + GlobalPos == 0) {
                                 throw new LzmaException("LZMA : Data Error");
                             }
@@ -143,8 +140,7 @@ public class LzmaInputStream extends FilterInputStream
                             uncompressed_buffer[(uncompressed_size++)] = (byte) i;
                             continue;
                         }
-                    }
-                    else {
+                    } else {
                         if (RangeDecoder.BitDecode(probs, 216 + State) == 0) {
                             n = rep1;
                         } else {
@@ -174,28 +170,25 @@ public class LzmaInputStream extends FilterInputStream
                         rep0 = ((0x2 | n & 0x1) << i1);
                         if (n < 14) {
                             rep0 += RangeDecoder.ReverseBitTreeDecode(probs, 688 + rep0 - n - 1, i1);
-                        }
-                        else {
+                        } else {
                             rep0 += (RangeDecoder.DecodeDirectBits(i1 - 4) << 4);
 
                             rep0 += RangeDecoder.ReverseBitTreeDecode(probs, 802, 4);
                         }
                     } else {
                         rep0 = n;
-                    }rep0 += 1;
+                    }
+                    rep0 += 1;
                 }
-                if (rep0 == 0)
-                {
+                if (rep0 == 0) {
                     RemainLen = -1;
                     break;
                 }
-                if (rep0 > uncompressed_size + GlobalPos)
-                {
+                if (rep0 > uncompressed_size + GlobalPos) {
                     throw new LzmaException("LZMA : Data Error");
                 }
                 RemainLen += 2;
-                do
-                {
+                do {
                     n = dictionaryPos - rep0;
                     if (n < 0)
                         n += dictionarySize;
@@ -206,7 +199,7 @@ public class LzmaInputStream extends FilterInputStream
                     }
                     uncompressed_buffer[(uncompressed_size++)] = (byte) i;
                     RemainLen -= 1;
-                }while ((RemainLen > 0) && (uncompressed_size < paramInt));
+                } while ((RemainLen > 0) && (uncompressed_size < paramInt));
             }
         }
 
@@ -221,7 +214,7 @@ public class LzmaInputStream extends FilterInputStream
             if (l > 65536L)
                 i = 65536;
             else {
-                i = (int)l;
+                i = (int) l;
             }
             LzmaDecode(i);
 
@@ -232,8 +225,7 @@ public class LzmaInputStream extends FilterInputStream
         }
     }
 
-    private void readHeader() throws IOException
-    {
+    private void readHeader() throws IOException {
         byte[] arrayOfByte = new byte[5];
 
         if (5 != in.read(arrayOfByte)) {

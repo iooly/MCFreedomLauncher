@@ -21,7 +21,7 @@ public class CompleteVersion
     private int minimumLauncherVersion;
     private String incompatibilityReason;
     private List<Rule> rules;
-  private volatile boolean synced = false;
+    private volatile boolean synced = false;
 
     public CompleteVersion() {
     }
@@ -220,11 +220,11 @@ public class CompleteVersion
         return this.incompatibilityReason;
     }
 
-  public boolean isSynced() {
-    return this.synced;
-  }
+    public boolean isSynced() {
+        return this.synced;
+    }
 
-  public void setSynced(boolean synced) {
-    this.synced = synced;
-  }
+    public void setSynced(boolean synced) {
+        this.synced = synced;
+    }
 }

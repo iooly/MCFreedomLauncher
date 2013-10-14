@@ -36,6 +36,8 @@ public abstract interface AuthenticationService {
 
     public abstract String getSessionToken();
 
+    public abstract String getAccessToken();
+
     public abstract String getUsername();
 
     public abstract void setUsername(String paramString);

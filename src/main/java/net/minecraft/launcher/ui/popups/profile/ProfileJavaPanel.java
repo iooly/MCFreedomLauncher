@@ -12,7 +12,7 @@ import java.awt.event.ItemListener;
 import java.util.ResourceBundle;
 
 public class ProfileJavaPanel extends JPanel {
-    private ResourceBundle resourceBundle= LocaleHelper.getMessages();
+    private ResourceBundle resourceBundle = LocaleHelper.getMessages();
     private final ProfileEditorPopup editor;
     private final JCheckBox javaPathCustom = new JCheckBox(resourceBundle.getString("executable"));
     private final JTextField javaPathField = new JTextField();

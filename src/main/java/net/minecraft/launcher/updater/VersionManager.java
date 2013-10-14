@@ -40,10 +40,10 @@ public class VersionManager {
         synchronized (this.refreshLock) {
             this.isRefreshing = true;
         }
-    try {
-      Launcher.getInstance().println("Refreshing local version list...");
+        try {
+            Launcher.getInstance().println("Refreshing local version list...");
             this.localVersionList.refreshVersions();
-      Launcher.getInstance().println("Refreshing remote version list...");
+            Launcher.getInstance().println("Refreshing remote version list...");
             this.remoteVersionList.refreshVersions();
         } catch (IOException ex) {
             synchronized (this.refreshLock) {
@@ -52,7 +52,7 @@ public class VersionManager {
             throw ex;
         }
 
-    Launcher.getInstance().println("Refresh complete.");
+        Launcher.getInstance().println("Refresh complete.");
 
         synchronized (this.refreshLock) {
             this.isRefreshing = false;
@@ -237,7 +237,7 @@ public class VersionManager {
             URL resourceUrl = new URL("https://s3.amazonaws.com/Minecraft.Resources/");
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();
-      Document doc = db.parse(resourceUrl.openConnection(proxy).getInputStream());
+            Document doc = db.parse(resourceUrl.openConnection(proxy).getInputStream());
             NodeList nodeLst = doc.getElementsByTagName("Contents");
 
             long start = System.nanoTime();

@@ -81,28 +81,23 @@ public class GameLauncher
             setWorking(true);
         }
 
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                GameLauncher.this.launcher.getLauncherPanel().getTabPanel().showConsole();
-            }
-        });
         this.launcher.println("Getting syncinfo for selected version");
 
         Profile profile = this.launcher.getProfileManager().getSelectedProfile();
         String lastVersionId = profile.getLastVersionId();
-    VersionSyncInfo syncInfo = null;
+        VersionSyncInfo syncInfo = null;
 
         if (profile.getLauncherVisibilityOnGameClose() == null)
             this.visibilityRule = Profile.DEFAULT_LAUNCHER_VISIBILITY;
-    else {
+        else {
             this.visibilityRule = profile.getLauncherVisibilityOnGameClose();
-    }
+        }
 
-    if (lastVersionId != null) {
+        if (lastVersionId != null) {
             syncInfo = this.launcher.getVersionManager().getVersionSyncInfo(lastVersionId);
-    }
+        }
 
-    if ((syncInfo == null) || (syncInfo.getLatestVersion() == null)) {
+        if ((syncInfo == null) || (syncInfo.getLatestVersion() == null)) {
             syncInfo = (VersionSyncInfo) this.launcher.getVersionManager().getVersions(profile.getVersionFilter()).get(0);
         }
 
@@ -122,18 +117,18 @@ public class GameLauncher
                 return;
             }
 
-      if ((syncInfo.getRemoteVersion() != null) && (syncInfo.getLatestSource() != VersionSyncInfo.VersionSource.REMOTE) && (!this.version.isSynced())) {
-        try {
-          CompleteVersion remoteVersion = this.launcher.getVersionManager().getRemoteVersionList().getCompleteVersion(syncInfo.getRemoteVersion());
-          this.launcher.getVersionManager().getLocalVersionList().removeVersion(this.version);
-          this.launcher.getVersionManager().getLocalVersionList().addVersion(remoteVersion);
-          ((LocalVersionList)this.launcher.getVersionManager().getLocalVersionList()).saveVersion(remoteVersion);
-          this.version = remoteVersion;
-        } catch (IOException e) {
-          Launcher.getInstance().println("Couldn't sync local and remote versions", e);
-        }
-        this.version.setSynced(true);
-      }
+            if ((syncInfo.getRemoteVersion() != null) && (syncInfo.getLatestSource() != VersionSyncInfo.VersionSource.REMOTE) && (!this.version.isSynced())) {
+                try {
+                    CompleteVersion remoteVersion = this.launcher.getVersionManager().getRemoteVersionList().getCompleteVersion(syncInfo.getRemoteVersion());
+                    this.launcher.getVersionManager().getLocalVersionList().removeVersion(this.version);
+                    this.launcher.getVersionManager().getLocalVersionList().addVersion(remoteVersion);
+                    ((LocalVersionList) this.launcher.getVersionManager().getLocalVersionList()).saveVersion(remoteVersion);
+                    this.version = remoteVersion;
+                } catch (IOException e) {
+                    Launcher.getInstance().println("Couldn't sync local and remote versions", e);
+                }
+                this.version.setSynced(true);
+            }
    
 /*if (!this.version.appliesToCurrentEnvironment()) {
         String reason = this.version.getIncompatibilityReason();
@@ -144,7 +139,7 @@ public class GameLauncher
         return;
       }
 
-      if (this.version.getMinimumLauncherVersion() > 7) {
+      if (this.version.getMinimumLauncherVersion() > 8) {
         Launcher.getInstance().println("An update to your launcher is available and is required to play " + this.version.getId() + ". Please restart your launcher.");
         setWorking(false);
         return;
@@ -215,12 +210,11 @@ public class GameLauncher
 
         File assetsDirectory = new File(this.launcher.getWorkingDirectory(), "assets");
 
-    OperatingSystem os = OperatingSystem.getCurrentPlatform();
-    if (os.equals(OperatingSystem.OSX))
+        OperatingSystem os = OperatingSystem.getCurrentPlatform();
+        if (os.equals(OperatingSystem.OSX))
             processLauncher.addCommands(new String[]{"-Xdock:icon=" + new File(assetsDirectory, "icons/minecraft.icns").getAbsolutePath(), "-Xdock:name=Minecraft"});
-    else if (os.equals(OperatingSystem.WINDOWS))
-    {
-      processLauncher.addCommands(new String[] { "-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump" });
+        else if (os.equals(OperatingSystem.WINDOWS)) {
+            processLauncher.addCommands(new String[]{"-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump"});
         }
 
         String profileArgs = selectedProfile.getJavaArgs();
@@ -301,6 +295,7 @@ public class GameLauncher
 
         map.put("auth_username", authentication.getUsername());
         map.put("auth_session", (authentication.getSessionToken() == null) && (authentication.canPlayOnline()) ? "-" : authentication.getSessionToken());
+        map.put("auth_access_token", authentication.getAccessToken());
 
         if (authentication.getSelectedProfile() != null) {
             map.put("auth_player_name", authentication.getSelectedProfile().getName());

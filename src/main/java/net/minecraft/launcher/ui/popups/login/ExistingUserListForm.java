@@ -111,7 +111,7 @@ public class ExistingUserListForm extends JPanel
                             auth.logIn();
                             ExistingUserListForm.this.popup.setLoggedIn(uuid);
                         } catch (AuthenticationException ex) {
-                            ExistingUserListForm.this.popup.getErrorForm().displayError(new String[]{resourceBundle.getString("we.couldn.t.log.you.back.in.as") + selected + ".", resourceBundle.getString("please.try.to.log.in.again")});
+                            ExistingUserListForm.this.popup.getErrorForm().displayError(ex, new String[]{resourceBundle.getString("we.couldn.t.log.you.back.in.as") + selected + ".", resourceBundle.getString("please.try.to.log.in.again")});
 
 
                             ExistingUserListForm.this.removeUser((String) selected, uuid);

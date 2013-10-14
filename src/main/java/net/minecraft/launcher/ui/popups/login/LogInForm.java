@@ -68,6 +68,7 @@ public class LogInForm extends JPanel
 
 
         JLabel forgotUsernameLabel = new JLabel(resourceBundle.getString("which.do.i.use"));
+        forgotUsernameLabel.setCursor(new Cursor(12));
         forgotUsernameLabel.setFont(smalltextFont);
         forgotUsernameLabel.setHorizontalAlignment(4);
         forgotUsernameLabel.addMouseListener(new MouseAdapter() {
@@ -85,6 +86,7 @@ public class LogInForm extends JPanel
         add(this.passwordField, constraints);
 
         JLabel forgotPasswordLabel = new JLabel(resourceBundle.getString("forgot.password"));
+        forgotPasswordLabel.setCursor(new Cursor(12));
         forgotPasswordLabel.setFont(smalltextFont);
         forgotPasswordLabel.setHorizontalAlignment(4);
         forgotPasswordLabel.addMouseListener(new MouseAdapter() {
@@ -94,7 +96,7 @@ public class LogInForm extends JPanel
         });
         add(forgotPasswordLabel, constraints);
 
-        add(onlineModeCheckBox,constraints);
+        add(onlineModeCheckBox, constraints);
 
 
         createUserDropdownPanel(labelFont);
@@ -148,11 +150,11 @@ public class LogInForm extends JPanel
                         LogInForm.this.popup.setLoggedIn(LogInForm.this.authentication.getSelectedProfile().getId());
                     } catch (InvalidCredentialsException ex) {
                         LogInForm.this.popup.getLauncher().println(ex);
-                        LogInForm.this.popup.getErrorForm().displayError(new String[]{resourceBundle.getString("sorry.but.we.couldn.t.log.you.in.right.now"), resourceBundle.getString("please.try.again.later")});
+                        LogInForm.this.popup.getErrorForm().displayError(ex, new String[]{resourceBundle.getString("sorry.but.we.couldn.t.log.you.in.right.now"), resourceBundle.getString("please.try.again.later")});
                         LogInForm.this.popup.setCanLogIn(true);
                     } catch (AuthenticationException ex) {
                         LogInForm.this.popup.getLauncher().println(ex);
-                        LogInForm.this.popup.getErrorForm().displayError(new String[]{resourceBundle.getString("sorry.but.we.couldn.t.connect.to.our.servers"), resourceBundle.getString("please.make.sure.that.you.are.online.and.that.minecraft.is.not.blocked")});
+                        LogInForm.this.popup.getErrorForm().displayError(ex, new String[]{resourceBundle.getString("sorry.but.we.couldn.t.connect.to.our.servers"), resourceBundle.getString("please.make.sure.that.you.are.online.and.that.minecraft.is.not.blocked")});
                         LogInForm.this.popup.setCanLogIn(true);
                     }
                 }
@@ -199,15 +201,15 @@ public class LogInForm extends JPanel
                         }
                     } catch (UserMigratedException ex) {
                         LogInForm.this.popup.getLauncher().println(ex);
-                        LogInForm.this.popup.getErrorForm().displayError(new String[]{"Sorry, but we can't log you in with your username.", "You have migrated your account, please use your email address."});
+                        LogInForm.this.popup.getErrorForm().displayError(ex, new String[]{"Sorry, but we can't log you in with your username.", "You have migrated your account, please use your email address."});
                         LogInForm.this.popup.setCanLogIn(true);
                     } catch (InvalidCredentialsException ex) {
                         LogInForm.this.popup.getLauncher().println(ex);
-                        LogInForm.this.popup.getErrorForm().displayError(new String[]{"Sorry, but your username or password is incorrect!", "Please try again. If you need help, try the 'Forgot Password' link."});
+                        LogInForm.this.popup.getErrorForm().displayError(ex, new String[]{"Sorry, but your username or password is incorrect!", "Please try again. If you need help, try the 'Forgot Password' link."});
                         LogInForm.this.popup.setCanLogIn(true);
                     } catch (AuthenticationException ex) {
                         LogInForm.this.popup.getLauncher().println(ex);
-                        LogInForm.this.popup.getErrorForm().displayError(new String[]{"Sorry, but we couldn't connect to our servers.", "Please make sure that you are online and that Minecraft is not blocked."});
+                        LogInForm.this.popup.getErrorForm().displayError(ex, new String[]{"Sorry, but we couldn't connect to our servers.", "Please make sure that you are online and that Minecraft is not blocked."});
                         LogInForm.this.popup.setCanLogIn(true);
                     }
                 }

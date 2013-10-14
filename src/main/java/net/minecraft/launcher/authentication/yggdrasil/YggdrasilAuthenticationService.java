@@ -104,8 +104,8 @@ public class YggdrasilAuthenticationService extends BaseAuthenticationService {
             if (result == null) return null;
 
             if (StringUtils.isNotBlank(result.getError())) {
-        if ("UserMigratedException".equals(result.getCause()))
-          throw new UserMigratedException(result.getErrorMessage());
+                if ("UserMigratedException".equals(result.getCause()))
+                    throw new UserMigratedException(result.getErrorMessage());
                 if (result.getError().equals("ForbiddenOperationException")) {
                     throw new InvalidCredentialsException(result.getErrorMessage());
                 }

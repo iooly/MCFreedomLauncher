@@ -26,7 +26,7 @@ import java.util.ResourceBundle;
 
 public class ProfileListTab extends JScrollPane
         implements RefreshedProfilesListener {
-    private ResourceBundle resourceBundle= LocaleHelper.getMessages();
+    private ResourceBundle resourceBundle = LocaleHelper.getMessages();
     private static final int COLUMN_NAME = 0;
     private static final int COLUMN_VERSION = 1;
     private static final int COLUMN_AUTHENTICATION = 2;

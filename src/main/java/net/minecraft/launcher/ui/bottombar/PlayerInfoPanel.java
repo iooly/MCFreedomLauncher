@@ -19,7 +19,7 @@ import java.util.ResourceBundle;
 
 public class PlayerInfoPanel extends JPanel
         implements RefreshedProfilesListener, RefreshedVersionsListener {
-    ResourceBundle resourceBundle=LocaleHelper.getMessages() ;
+    ResourceBundle resourceBundle = LocaleHelper.getMessages();
     private final Launcher launcher;
     private final JLabel welcomeText = new JLabel("", 0);
     private final JLabel versionText = new JLabel("", 0);
@@ -83,8 +83,8 @@ public class PlayerInfoPanel extends JPanel
         VersionSyncInfo version = (profile == null) || (versions.isEmpty()) ? null : (VersionSyncInfo) versions.get(0);
 
         if ((profile != null) && (profile.getLastVersionId() != null)) {
-      VersionSyncInfo requestedVersion = this.launcher.getVersionManager().getVersionSyncInfo(profile.getLastVersionId());
-      if ((requestedVersion != null) && (requestedVersion.getLatestVersion() != null)) version = requestedVersion;
+            VersionSyncInfo requestedVersion = this.launcher.getVersionManager().getVersionSyncInfo(profile.getLastVersionId());
+            if ((requestedVersion != null) && (requestedVersion.getLatestVersion() != null)) version = requestedVersion;
         }
 
         if ((auth == null) || (!auth.isLoggedIn())) {

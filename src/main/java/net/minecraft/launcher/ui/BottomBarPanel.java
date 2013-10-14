@@ -15,7 +15,7 @@ public class BottomBarPanel extends JPanel {
     private final ProfileSelectionPanel profileSelectionPanel;
     private final PlayerInfoPanel playerInfoPanel;
     private final PlayButtonPanel playButtonPanel;
-    private  final SettingsPanel settingsPanel;
+    private final SettingsPanel settingsPanel;
 
     public BottomBarPanel(Launcher launcher) {
         this.launcher = launcher;
@@ -27,7 +27,6 @@ public class BottomBarPanel extends JPanel {
         this.playerInfoPanel = new PlayerInfoPanel(launcher);
         this.playButtonPanel = new PlayButtonPanel(launcher);
         this.settingsPanel = new SettingsPanel(launcher);
-
 
 
         createInterface();

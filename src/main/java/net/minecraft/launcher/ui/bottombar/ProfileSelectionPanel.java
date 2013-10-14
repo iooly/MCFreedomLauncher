@@ -21,7 +21,7 @@ import java.util.ResourceBundle;
 
 public class ProfileSelectionPanel extends JPanel
         implements ActionListener, ItemListener, RefreshedProfilesListener {
-    private ResourceBundle resourceBundle= LocaleHelper.getMessages();
+    private ResourceBundle resourceBundle = LocaleHelper.getMessages();
     private final JComboBox profileList = new JComboBox();
     private final JButton newProfileButton = new JButton(resourceBundle.getString("new.profile"));
     private final JButton editProfileButton = new JButton(resourceBundle.getString("edit.profile"));
@@ -113,11 +113,11 @@ public class ProfileSelectionPanel extends JPanel
         if ((!this.skipSelectionUpdate) && ((e.getItem() instanceof Profile))) {
             Profile profile = (Profile) e.getItem();
             this.launcher.getProfileManager().setSelectedProfile(profile.getName());
-      try {
-        this.launcher.getProfileManager().saveProfiles();
-      } catch (IOException e1) {
-        this.launcher.println("Couldn't save new selected profile", e1);
-      }
+            try {
+                this.launcher.getProfileManager().saveProfiles();
+            } catch (IOException e1) {
+                this.launcher.println("Couldn't save new selected profile", e1);
+            }
             this.launcher.ensureLoggedIn();
         }
     }
