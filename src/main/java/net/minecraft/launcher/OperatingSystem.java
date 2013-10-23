@@ -1,6 +1,7 @@
 package net.minecraft.launcher;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 
 public enum OperatingSystem {
@@ -60,6 +61,36 @@ public enum OperatingSystem {
             desktopClass.getMethod("browse", new Class[]{URI.class}).invoke(o, new Object[]{link});
         } catch (Throwable e) {
             Launcher.getInstance().println("Failed to open link " + link.toString(), e);
+        }
+    }
+
+    public static void openFolder(File path) {
+        String absolutePath = path.getAbsolutePath();
+        OperatingSystem os = getCurrentPlatform();
+
+        if (os == OSX) {
+            try {
+                Runtime.getRuntime().exec(new String[]{"/usr/bin/open", absolutePath});
+
+                return;
+            } catch (IOException e) {
+                Launcher.getInstance().println("Couldn't open " + path + " through /usr/bin/open", e);
+            }
+        } else if (os == WINDOWS) {
+            String cmd = String.format("cmd.exe /C start \"Open file\" \"%s\"", new Object[]{absolutePath});
+            try {
+                Runtime.getRuntime().exec(cmd);
+                return;
+            } catch (IOException e) {
+                Launcher.getInstance().println("Couldn't open " + path + " through cmd.exe", e);
+            }
+        }
+        try {
+            Class desktopClass = Class.forName("java.awt.Desktop");
+            Object desktop = desktopClass.getMethod("getDesktop", new Class[0]).invoke(null, new Object[0]);
+            desktopClass.getMethod("browse", new Class[]{URI.class}).invoke(desktop, new Object[]{path.toURI()});
+        } catch (Throwable e) {
+            Launcher.getInstance().println("Couldn't open " + path + " through Desktop.browse()", e);
         }
     }
 }

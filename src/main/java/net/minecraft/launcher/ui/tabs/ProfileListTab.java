@@ -38,6 +38,7 @@ public class ProfileListTab extends JScrollPane
     private final JMenuItem addProfileButton = new JMenuItem(resourceBundle.getString("add.profile"));
     private final JMenuItem copyProfileButton = new JMenuItem(resourceBundle.getString("copy.profile"));
     private final JMenuItem deleteProfileButton = new JMenuItem(resourceBundle.getString("delete.profile"));
+    private final JMenuItem browseGameFolder = new JMenuItem("Open Game Folder");
 
     public ProfileListTab(Launcher launcher) {
         this.launcher = launcher;
@@ -52,6 +53,7 @@ public class ProfileListTab extends JScrollPane
         this.popupMenu.add(this.addProfileButton);
         this.popupMenu.add(this.copyProfileButton);
         this.popupMenu.add(this.deleteProfileButton);
+        this.popupMenu.add(this.browseGameFolder);
 
         this.table.setFillsViewportHeight(true);
         this.table.setSelectionMode(0);
@@ -63,6 +65,7 @@ public class ProfileListTab extends JScrollPane
 
                 ProfileListTab.this.copyProfileButton.setEnabled(hasSelection);
                 ProfileListTab.this.deleteProfileButton.setEnabled(hasSelection);
+                ProfileListTab.this.browseGameFolder.setEnabled(hasSelection);
             }
 
             public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {

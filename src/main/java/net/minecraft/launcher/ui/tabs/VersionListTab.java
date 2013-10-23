@@ -11,6 +11,9 @@ import net.minecraft.launcher.versions.Version;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.*;
 
 public class VersionListTab extends JScrollPane
@@ -26,7 +29,8 @@ public class VersionListTab extends JScrollPane
     private final Launcher launcher;
     private final VersionTableModel dataModel = new VersionTableModel();
     private final JTable table = new JTable(this.dataModel);
-
+    private final JPopupMenu popupMenu = new JPopupMenu();
+    private final JMenuItem browseVersionFolder = new JMenuItem("Open Versions Folder");
 
     public VersionListTab(Launcher launcher) {
         this.launcher = launcher;
@@ -38,7 +42,15 @@ public class VersionListTab extends JScrollPane
     }
 
     protected void createInterface() {
+        this.popupMenu.add(this.browseVersionFolder);
+        this.table.setComponentPopupMenu(this.popupMenu);
         this.table.setFillsViewportHeight(true);
+
+        this.browseVersionFolder.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                OperatingSystem.openFolder(new File(VersionListTab.this.launcher.getWorkingDirectory(), "/versions/"));
+            }
+        });
     }
 
     public Launcher getLauncher() {

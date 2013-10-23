@@ -1,6 +1,7 @@
 package net.minecraft.launcher.ui.popups.profile;
 
 import net.minecraft.launcher.Launcher;
+import net.minecraft.launcher.OperatingSystem;
 import net.minecraft.launcher.locale.LocaleHelper;
 import net.minecraft.launcher.profile.Profile;
 import net.minecraft.launcher.profile.ProfileManager;
@@ -23,6 +24,7 @@ public class ProfileEditorPopup extends JPanel
     private ResourceBundle resourceBundle = LocaleHelper.getMessages();
     private final JButton saveButton = new JButton(resourceBundle.getString("save.profile"));
     private final JButton cancelButton = new JButton(resourceBundle.getString("cancel"));
+    private final JButton browseButton = new JButton("Open Game Dir");
     private final ProfileInfoPanel profileInfoPanel;
     private final ProfileVersionPanel profileVersionPanel;
     private final ProfileJavaPanel javaInfoPanel;
@@ -39,6 +41,7 @@ public class ProfileEditorPopup extends JPanel
 
         this.saveButton.addActionListener(this);
         this.cancelButton.addActionListener(this);
+        this.browseButton.addActionListener(this);
 
         setBorder(new EmptyBorder(5, 5, 5, 5));
         setLayout(new BorderLayout(0, 5));
@@ -58,6 +61,8 @@ public class ProfileEditorPopup extends JPanel
         buttonPannel.setLayout(new BoxLayout(buttonPannel, 0));
         buttonPannel.add(this.cancelButton);
         buttonPannel.add(Box.createGlue());
+        buttonPannel.add(this.browseButton);
+        buttonPannel.add(Box.createHorizontalStrut(5));
         buttonPannel.add(this.saveButton);
         add(buttonPannel, "South");
     }
@@ -85,8 +90,15 @@ public class ProfileEditorPopup extends JPanel
             } catch (IOException ex) {
                 this.launcher.println("Couldn't save profiles whilst editing " + this.profile.getName(), ex);
             }
+            closeWindow();
+        } else if (e.getSource() == this.browseButton) {
+            OperatingSystem.openFolder(this.profile.getGameDir() == null ? this.launcher.getWorkingDirectory() : this.profile.getGameDir());
+        } else {
+            closeWindow();
         }
+    }
 
+    private void closeWindow() {
         Window window = (Window) getTopLevelAncestor();
         window.dispatchEvent(new WindowEvent(window, 201));
     }

@@ -139,7 +139,7 @@ public class GameLauncher
         return;
       }
 
-      if (this.version.getMinimumLauncherVersion() > 8) {
+      if (this.version.getMinimumLauncherVersion() > 9) {
         Launcher.getInstance().println("An update to your launcher is available and is required to play " + this.version.getId() + ". Please restart your launcher.");
         setWorking(false);
         return;

@@ -234,38 +234,48 @@ public class VersionManager {
     private Set<Downloadable> getResourceFiles(Proxy proxy, File baseDirectory) {
         Set result = new HashSet();
         try {
-            URL resourceUrl = new URL("https://s3.amazonaws.com/Minecraft.Resources/");
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            Document doc = db.parse(resourceUrl.openConnection(proxy).getInputStream());
-            NodeList nodeLst = doc.getElementsByTagName("Contents");
-
+            String nextMarker = null;
             long start = System.nanoTime();
-            for (int i = 0; i < nodeLst.getLength(); i++) {
-                Node node = nodeLst.item(i);
+            do {
+                String query = nextMarker != null ? "?marker=" + nextMarker : "";
+                URL resourceUrl = new URL("https://s3.amazonaws.com/Minecraft.Resources/" + query);
+                System.out.println("resourceUrl = " + resourceUrl);
+                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                DocumentBuilder db = dbf.newDocumentBuilder();
+                Document doc = db.parse(resourceUrl.openConnection(proxy).getInputStream());
+                NodeList nodeLst = doc.getElementsByTagName("Contents");
 
-                if (node.getNodeType() == 1) {
-                    Element element = (Element) node;
-                    String key = element.getElementsByTagName("Key").item(0).getChildNodes().item(0).getNodeValue();
-                    String etag = element.getElementsByTagName("ETag") != null ? element.getElementsByTagName("ETag").item(0).getChildNodes().item(0).getNodeValue() : "-";
-                    long size = Long.parseLong(element.getElementsByTagName("Size").item(0).getChildNodes().item(0).getNodeValue());
+                for (int i = 0; i < nodeLst.getLength(); i++) {
+                    Node node = nodeLst.item(i);
 
-                    if (size > 0L) {
-                        File file = new File(baseDirectory, "assets/" + key);
-                        if (etag.length() > 1) {
-                            etag = Downloadable.getEtag(etag);
-                            if ((file.isFile()) && (file.length() == size)) {
-                                String localMd5 = Downloadable.getMD5(file);
-                                if (localMd5.equals(etag)) continue;
+                    if (node.getNodeType() == 1) {
+                        Element element = (Element) node;
+                        String key = element.getElementsByTagName("Key").item(0).getChildNodes().item(0).getNodeValue();
+                        String etag = element.getElementsByTagName("ETag") != null ? element.getElementsByTagName("ETag").item(0).getChildNodes().item(0).getNodeValue() : "-";
+                        long size = Long.parseLong(element.getElementsByTagName("Size").item(0).getChildNodes().item(0).getNodeValue());
+
+                        if (size > 0L) {
+                            File file = new File(baseDirectory, "assets/" + key);
+                            if (etag.length() > 1) {
+                                etag = Downloadable.getEtag(etag);
+                                if ((file.isFile()) && (file.length() == size)) {
+                                    String localMd5 = Downloadable.getMD5(file);
+                                    if (localMd5.equals(etag)) continue;
+                                }
                             }
+                            //result.add(new Downloadable(proxy, new URL("https://s3.amazonaws.com/Minecraft.Resources/" + key), file, false));
+                            Downloadable downloadable = new Downloadable(proxy, new URL("https://s3.amazonaws.com/Minecraft.Resources/" + key), file, false);
+                            downloadable.setExpectedSize(size);
+                            result.add(downloadable);
+                        } else {
+                            nextMarker = key;
                         }
-                        //result.add(new Downloadable(proxy, new URL("https://s3.amazonaws.com/Minecraft.Resources/" + key), file, false));
-                        Downloadable downloadable = new Downloadable(proxy, new URL("https://s3.amazonaws.com/Minecraft.Resources/" + key), file, false);
-                        downloadable.setExpectedSize(size);
-                        result.add(downloadable);
                     }
                 }
+                if ("false".equals(doc.getElementsByTagName("IsTruncated").item(0).getTextContent()))
+                    nextMarker = null;
             }
+            while (nextMarker != null);
             long end = System.nanoTime();
             long delta = end - start;
             Launcher.getInstance().println("Delta time to compare resources: " + delta / 1000000L + " ms ");
