@@ -231,7 +231,7 @@
         <profile>
             <id>package-win</id>
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <activeByDefault>false</activeByDefault>
             </activation>
             <!--<activation>
                  <os>
