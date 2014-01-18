@@ -7,7 +7,7 @@
     <groupId>org.hopto.energy</groupId>
     <artifactId>MCFreedomLauncher</artifactId>
     <description>Minecraft Freedom Launcher-Free the New Minecraft Launcher with Energy!</description>
-    <version>1.2.7</version>
+    <version>1.3.7</version>
     <url>http://energy0124.github.io/MCFreedomLauncher/</url>
     <scm>
         <connection>scm:git:git://github.com/Energy0124/MCFreedomLauncher.git</connection>
@@ -60,6 +60,16 @@
             <artifactId>commons-lang3</artifactId>
             <version>3.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.0-beta9</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.0-beta9</version>
+        </dependency>
 
 
     </dependencies>
@@ -71,9 +81,9 @@
                 <directory>${basedir}/src/main/resources/locale/</directory>
                 <includes>
                     <include>*.properties</include>
-                    <!--<include>MessagesBundle.properties</include>
+                    <include>MessagesBundle.properties</include>
                     <include>MessagesBundle_zh_HK.properties</include>
-                    <include>MessagesBundle_en_US.properties</include>-->
+                    <include>MessagesBundle_en_US.properties</include>
                 </includes>
             </resource>
 
@@ -82,6 +92,12 @@
                 <directory>${basedir}/src/main/java/</directory>
                 <includes>
                     <include>*.png</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>${basedir}/src/main/java/</directory>
+                <includes>
+                    <include>log4j2.xml</include>
                 </includes>
             </resource>
            <resource>
@@ -133,7 +149,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <minimizeJar>true</minimizeJar>
+                    <minimizeJar>false</minimizeJar>
                 </configuration>
             </plugin>
             <plugin>
@@ -167,7 +183,7 @@
                     <bundleName>${project.name}</bundleName>
                     <version>${project.version}</version>
                     <internetEnable>true</internetEnable>
-                    <mainClass>org.hopto.energy.Main</mainClass>
+                    <mainClass>org.hopto.org.hopto.energy.Main</mainClass>
                     <javaApplicationStub>${basedir}/src/main/resources/JavaApplicationStub</javaApplicationStub>
                     <jvmVersion>1.6+</jvmVersion>
                     <zipFile>${project.build.directory}/${project.build.finalName}.app.zip</zipFile>
@@ -200,7 +216,7 @@
                             <jar>target/${project.build.finalName}.jar</jar>
                             <errTitle>${project.name} Error</errTitle>
                             <classPath>
-                                <mainClass>org.hopto.energy.Main</mainClass>
+                                <mainClass>org.hopto.org.hopto.energy.Main</mainClass>
                             </classPath>
                             <icon>${basedir}/icon.ico</icon>
                             <jre>
@@ -304,7 +320,7 @@
                         <bundleName>${project.name}</bundleName>
                         <version>${project.version}</version>
                         <internetEnable>true</internetEnable>
-                        <mainClass>org.hopto.energy.Main</mainClass>
+                        <mainClass>org.hopto.org.hopto.energy.Main</mainClass>
                         <javaApplicationStub>${basedir}/src/main/resources/JavaApplicationStub</javaApplicationStub>
                         <jvmVersion>1.6+</jvmVersion>
                         <zipFile>${project.build.directory}/${project.build.finalName}.app.zip</zipFile>

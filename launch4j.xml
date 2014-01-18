@@ -1,8 +1,8 @@
 <launch4jConfig>
   <dontWrapJar>false</dontWrapJar>
   <headerType>gui</headerType>
-  <jar>F:\Users\Energy\Documents\GitHub\MCFreedomLauncher\out\artifacts\MCFreedomLauncher\MCFreedomLauncher.jar</jar>
-  <outfile>F:\Users\Energy\Documents\GitHub\MCFreedomLauncher\out\artifacts\MCFreedomLauncher\MCFreedomLauncher.exe</outfile>
+  <jar>F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Test\out\artifacts\MCFreedomLauncher\MCFreedomLauncher.jar</jar>
+  <outfile>F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Test\out\artifacts\MCFreedomLauncher\MCFreedomLauncher.exe</outfile>
   <errTitle></errTitle>
   <cmdLine></cmdLine>
   <chdir></chdir>

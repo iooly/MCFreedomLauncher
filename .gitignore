@@ -22,3 +22,15 @@ $RECYCLE.BIN/
 
 target/
 
+.metadata/
+.minecraft.lnk
+MCFreedomLauncher-Test.iml
+backup-src/
+lib/
+out-1.0.10/
+out/
+ref/
+release/
+screenshots/
+tools/
+
