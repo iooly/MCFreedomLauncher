@@ -126,10 +126,10 @@ public class Profile
     public VersionFilter getVersionFilter() {
         final VersionFilter filter = new VersionFilter().setMaxCount(Integer.MAX_VALUE);
         if (this.allowedReleaseTypes == null) {
-            filter.onlyForTypes((ReleaseType[])Profile.DEFAULT_RELEASE_TYPES.toArray(new ReleaseType[Profile.DEFAULT_RELEASE_TYPES.size()]));
+            filter.onlyForTypes((ReleaseType[])Profile.DEFAULT_RELEASE_TYPES.<ReleaseType>toArray(new ReleaseType[Profile.DEFAULT_RELEASE_TYPES.size()]));
         }
         else {
-            filter.onlyForTypes((ReleaseType[])this.allowedReleaseTypes.toArray(new ReleaseType[this.allowedReleaseTypes.size()]));
+            filter.onlyForTypes((ReleaseType[])this.allowedReleaseTypes.<ReleaseType>toArray(new ReleaseType[this.allowedReleaseTypes.size()]));
         }
         return filter;
     }
@@ -155,7 +155,7 @@ public class Profile
     static {
         DEFAULT_RESOLUTION = new Resolution(854, 480);
         DEFAULT_LAUNCHER_VISIBILITY = LauncherVisibilityRule.CLOSE_LAUNCHER;
-        DEFAULT_RELEASE_TYPES = new HashSet<ReleaseType>(Arrays.asList(ReleaseType.RELEASE));
+        DEFAULT_RELEASE_TYPES = new HashSet<ReleaseType>(Arrays.<ReleaseType>asList(ReleaseType.RELEASE));
     }
     
     public static class Resolution

@@ -77,7 +77,7 @@ public class VersionLibrariesPanel extends JScrollPane
         
         @Override
         public Object getValueAt(final int rowIndex, final int columnIndex) {
-            final Library library = VersionLibrariesPanel.this.editor.getVersion().getLibraries().get(rowIndex);
+            final Library library = (Library)VersionLibrariesPanel.this.editor.getVersion().getLibraries().get(rowIndex);
             if (columnIndex == 1) {
                 if (library.getRules() == null || library.getRules().isEmpty()) {
                     return "-";
@@ -89,7 +89,7 @@ public class VersionLibrariesPanel extends JScrollPane
                     }
                 }
                 if (allowedRules.size() == 1) {
-                    final Rule rule2 = allowedRules.get(0);
+                    final Rule rule2 = (Rule)allowedRules.get(0);
                     if (rule2.getOs() != null && rule2.getOs().getName() != null) {
                         if (StringUtils.isNotEmpty(rule2.getOs().getVersion())) {
                             return rule2.getOs().getName().getName() + " " + rule2.getOs().getVersion() + " only";

@@ -92,7 +92,7 @@ public class ChecksummedDownloadable extends Downloadable
             }
         }
         catch (IOException e) {
-            if (this.getTarget().isFile()) {
+            if (this.getTarget().isFile() && (this.checksum == null || this.checksum.length() == 0)) {
                 return "Couldn't connect to server (" + e.getClass().getSimpleName() + ": '" + e.getMessage() + "') but have local file, assuming it's good";
             }
             throw e;

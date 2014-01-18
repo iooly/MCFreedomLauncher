@@ -27,7 +27,7 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
     
     protected HttpAuthenticationService(final Proxy proxy) {
         super();
-        Validate.notNull(proxy);
+        Validate.<Proxy>notNull(proxy);
         this.proxy = proxy;
     }
     
@@ -36,7 +36,7 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
     }
     
     protected HttpURLConnection createUrlConnection(final URL url) throws IOException {
-        Validate.notNull(url);
+        Validate.<URL>notNull(url);
         HttpAuthenticationService.LOGGER.debug("Opening connection to " + url);
         final HttpURLConnection connection = (HttpURLConnection)url.openConnection(this.proxy);
         connection.setConnectTimeout(15000);
@@ -46,9 +46,9 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
     }
     
     public String performPostRequest(final URL url, final String post, final String contentType) throws IOException {
-        Validate.notNull(url);
-        Validate.notNull(post);
-        Validate.notNull(contentType);
+        Validate.<URL>notNull(url);
+        Validate.<String>notNull(post);
+        Validate.<String>notNull(contentType);
         final HttpURLConnection connection = this.createUrlConnection(url);
         final byte[] postAsBytes = post.getBytes(Charsets.UTF_8);
         connection.setRequestProperty("Content-Type", contentType + "; charset=utf-8");
@@ -91,7 +91,7 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
     }
     
     public String performGetRequest(final URL url) throws IOException {
-        Validate.notNull(url);
+        Validate.<URL>notNull(url);
         final HttpURLConnection connection = this.createUrlConnection(url);
         HttpAuthenticationService.LOGGER.debug("Reading data from " + url);
         InputStream inputStream = null;

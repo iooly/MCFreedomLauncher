@@ -1,10 +1,15 @@
 package net.minecraft.launcher.versions;
 
-import net.minecraft.launcher.OperatingSystem;
+import java.util.HashMap;
 import org.apache.commons.lang3.StringUtils;
+import java.util.EnumMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import net.minecraft.launcher.OperatingSystem;
+import java.util.Map;
+import java.util.List;
 import org.apache.commons.lang3.text.StrSubstitutor;
-
-import java.util.*;
 
 public class Library
 {

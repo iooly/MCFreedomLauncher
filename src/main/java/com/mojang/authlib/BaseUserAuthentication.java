@@ -24,7 +24,7 @@ public abstract class BaseUserAuthentication implements UserAuthentication
     protected BaseUserAuthentication(final AuthenticationService authenticationService) {
         super();
         this.userProperties = new HashMap<String, Collection<String>>();
-        Validate.notNull(authenticationService);
+        Validate.<AuthenticationService>notNull(authenticationService);
         this.authenticationService = authenticationService;
     }
     
@@ -153,9 +153,9 @@ public abstract class BaseUserAuthentication implements UserAuthentication
     @Override
     public Map<String, Collection<String>> getUserProperties() {
         if (this.isLoggedIn()) {
-            return Collections.unmodifiableMap((Map<? extends String, ? extends Collection<String>>)this.getModifiableUserProperties());
+            return Collections.<String, Collection<String>>unmodifiableMap((Map<? extends String, ? extends Collection<String>>)this.getModifiableUserProperties());
         }
-        return Collections.unmodifiableMap((Map<? extends String, ? extends Collection<String>>)new HashMap<String, Collection<String>>());
+        return Collections.<String, Collection<String>>unmodifiableMap((Map<? extends String, ? extends Collection<String>>)new HashMap<String, Collection<String>>());
     }
     
     protected Map<String, Collection<String>> getModifiableUserProperties() {

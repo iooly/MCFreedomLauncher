@@ -124,7 +124,7 @@ public class LogInForm extends JPanel implements ActionListener
     }
     
     public void tryLogIn() {
-        if (this.authentication.isLoggedIn() && this.authentication.getSelectedProfile() == null && ArrayUtils.isNotEmpty(this.authentication.getAvailableProfiles())) {
+        if (this.authentication.isLoggedIn() && this.authentication.getSelectedProfile() == null && ArrayUtils.<GameProfile>isNotEmpty(this.authentication.getAvailableProfiles())) {
             this.popup.setCanLogIn(false);
             GameProfile selectedProfile = null;
             for (final GameProfile profile : this.authentication.getAvailableProfiles()) {
@@ -172,7 +172,7 @@ public class LogInForm extends JPanel implements ActionListener
                         LogInForm.this.authentication.logIn();
                         final AuthenticationDatabase authDatabase = LogInForm.this.popup.getLauncher().getProfileManager().getAuthDatabase();
                         if (LogInForm.this.authentication.getSelectedProfile() == null) {
-                            if (ArrayUtils.isNotEmpty(LogInForm.this.authentication.getAvailableProfiles())) {
+                            if (ArrayUtils.<GameProfile>isNotEmpty(LogInForm.this.authentication.getAvailableProfiles())) {
                                 for (final GameProfile profile : LogInForm.this.authentication.getAvailableProfiles()) {
                                     LogInForm.this.userDropdown.addItem(profile.getName());
                                 }

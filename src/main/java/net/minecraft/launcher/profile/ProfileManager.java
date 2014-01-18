@@ -47,7 +47,7 @@ public class ProfileManager
         super();
         this.parser = new JsonParser();
         this.profiles = new HashMap<String, Profile>();
-        this.refreshedProfilesListeners = Collections.synchronizedList(new ArrayList<RefreshedProfilesListener>());
+        this.refreshedProfilesListeners = Collections.<RefreshedProfilesListener>synchronizedList(new ArrayList<RefreshedProfilesListener>());
         this.launcher = launcher;
         this.profileFile = new File(launcher.getWorkingDirectory(), "launcher_profiles.json");
         final GsonBuilder builder = new GsonBuilder();
@@ -75,9 +75,9 @@ public class ProfileManager
         if (this.profileFile.isFile()) {
             final JsonObject object = this.parser.parse(FileUtils.readFileToString(this.profileFile)).getAsJsonObject();
             if (object.has("clientToken")) {
-                this.launcher.setClientToken(this.gson.fromJson(object.get("clientToken"), UUID.class));
+                this.launcher.setClientToken(this.gson.<UUID>fromJson(object.get("clientToken"), UUID.class));
             }
-            final RawProfileList rawProfileList = this.gson.fromJson(object, RawProfileList.class);
+            final RawProfileList rawProfileList = (RawProfileList)this.gson.<RawProfileList>fromJson(object, RawProfileList.class);
             this.profiles.putAll(rawProfileList.profiles);
             this.selectedProfile = rawProfileList.selectedProfile;
             this.authDatabase = rawProfileList.authenticationDatabase;
@@ -92,7 +92,7 @@ public class ProfileManager
         final List<RefreshedProfilesListener> listeners = new ArrayList<RefreshedProfilesListener>(this.refreshedProfilesListeners);
         final Iterator<RefreshedProfilesListener> iterator = listeners.iterator();
         while (iterator.hasNext()) {
-            final RefreshedProfilesListener listener = iterator.next();
+            final RefreshedProfilesListener listener = (RefreshedProfilesListener)iterator.next();
             if (!listener.shouldReceiveEventsInUIThread()) {
                 listener.onProfilesRefreshed(this);
                 iterator.remove();
@@ -116,7 +116,7 @@ public class ProfileManager
                 this.selectedProfile = "(Default)";
             }
             else if (this.profiles.size() > 0) {
-                this.selectedProfile = this.profiles.values().iterator().next().getName();
+                this.selectedProfile = ((Profile)this.profiles.values().iterator().next()).getName();
             }
             else {
                 this.selectedProfile = "(Default)";

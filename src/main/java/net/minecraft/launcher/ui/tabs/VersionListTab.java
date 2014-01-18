@@ -64,7 +64,7 @@ public class VersionListTab extends JScrollPane implements RefreshedVersionsList
                 if (e.getClickCount() == 2) {
                     final int row = VersionListTab.this.table.getSelectedRow();
                     if (row >= 0 && row < VersionListTab.this.dataModel.versions.size() && VersionListTab.this.dataModel.versions.get(row) instanceof CompleteVersion) {
-                        VersionEditorPopup.showEditVersionDialog(VersionListTab.this.getLauncher(), (CompleteVersion)VersionListTab.this.dataModel.versions.get(row));
+                        VersionEditorPopup.showEditVersionDialog(VersionListTab.this.getLauncher(),(CompleteVersion) VersionListTab.this.dataModel.versions.get(row));
                     }
                 }
             }
@@ -169,7 +169,7 @@ public class VersionListTab extends JScrollPane implements RefreshedVersionsList
         
         @Override
         public Object getValueAt(final int rowIndex, final int columnIndex) {
-            final Version version = this.versions.get(rowIndex);
+            final Version version = (Version)this.versions.get(rowIndex);
             switch (columnIndex) {
                 case 0: {
                     return version.getId();

@@ -106,7 +106,7 @@ public class ProfileListTab extends JScrollPane implements RefreshedProfilesList
                 if (selection < 0 || selection >= ProfileListTab.this.table.getRowCount()) {
                     return;
                 }
-                final Profile current = ProfileListTab.this.dataModel.profiles.get(selection);
+                final Profile current = (Profile)ProfileListTab.this.dataModel.profiles.get(selection);
                 final Profile copy = new Profile(current);
                 copy.setName("Copy of " + current.getName());
                 while (ProfileListTab.this.launcher.getProfileManager().getProfiles().containsKey(copy.getName())) {
@@ -122,7 +122,7 @@ public class ProfileListTab extends JScrollPane implements RefreshedProfilesList
                 if (selection < 0 || selection >= ProfileListTab.this.table.getRowCount()) {
                     return;
                 }
-                final Profile profile = ProfileListTab.this.dataModel.profiles.get(selection);
+                final Profile profile = (Profile)ProfileListTab.this.dataModel.profiles.get(selection);
                 OperatingSystem.openFolder((profile.getGameDir() == null) ? ProfileListTab.this.launcher.getWorkingDirectory() : profile.getGameDir());
             }
         });
@@ -133,7 +133,7 @@ public class ProfileListTab extends JScrollPane implements RefreshedProfilesList
                 if (selection < 0 || selection >= ProfileListTab.this.table.getRowCount()) {
                     return;
                 }
-                final Profile current = ProfileListTab.this.dataModel.profiles.get(selection);
+                final Profile current = (Profile)ProfileListTab.this.dataModel.profiles.get(selection);
                 final int result = JOptionPane.showOptionDialog(ProfileListTab.this.launcher.getFrame(), "Are you sure you want to delete this profile?", "Profile Confirmation", 0, 2, null, LauncherConstants.CONFIRM_PROFILE_DELETION_OPTIONS, LauncherConstants.CONFIRM_PROFILE_DELETION_OPTIONS[0]);
                 if (result == 0) {
                     ProfileListTab.this.launcher.getProfileManager().getProfiles().remove(current.getName());
@@ -250,7 +250,7 @@ public class ProfileListTab extends JScrollPane implements RefreshedProfilesList
         
         @Override
         public Object getValueAt(final int rowIndex, final int columnIndex) {
-            final Profile profile = this.profiles.get(rowIndex);
+            final Profile profile = (Profile)this.profiles.get(rowIndex);
             final AuthenticationDatabase authDatabase = ProfileListTab.this.launcher.getProfileManager().getAuthDatabase();
             final UserAuthentication auth = authDatabase.getByUUID(profile.getPlayerUUID());
             switch (columnIndex) {

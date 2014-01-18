@@ -56,7 +56,7 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService
 //                       "    \"errorMessage\":\"\"\n" +
 //                       "    \n" +
 //                       "}" ;
-                final T result = this.gson.fromJson(jsonResult, classOfT);
+                final T result = (T)this.gson.<T>fromJson(jsonResult, classOfT);
                 if (result == null) {
                     return null;
                 }

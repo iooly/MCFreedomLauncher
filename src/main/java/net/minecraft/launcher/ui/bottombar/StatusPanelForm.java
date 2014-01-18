@@ -38,10 +38,10 @@ public class StatusPanelForm extends SidebarGridForm
     
     @Override
     protected void populateGrid(final GridBagConstraints constraints) {
-        this.add(new JLabel("Multiplayer:", 2), constraints, 0, 0, 0, 1, 17);
-        this.add(this.sessionStatus, constraints, 1, 0, 1, 1);
-        this.add(new JLabel("Login:", 2), constraints, 0, 1, 0, 1, 17);
-        this.add(this.loginStatus, constraints, 1, 1, 1, 1);
+        this.<JLabel>add(new JLabel("Multiplayer:", 2), constraints, 0, 0, 0, 1, 17);
+        this.<JLabel>add(this.sessionStatus, constraints, 1, 0, 1, 1);
+        this.<JLabel>add(new JLabel("Login:", 2), constraints, 0, 1, 0, 1, 17);
+        this.<JLabel>add(this.loginStatus, constraints, 1, 1, 1, 1);
     }
     
     public JLabel getSessionStatus() {
@@ -58,16 +58,16 @@ public class StatusPanelForm extends SidebarGridForm
             public void run() {
                 try {
                     final TypeToken<List<Map<String, ServerStatus>>> token = new TypeToken<List<Map<String, ServerStatus>>>() {};
-                    final List<Map<String, ServerStatus>> statuses = StatusPanelForm.this.gson.fromJson(Http.performGet(new URL("http://status.mojang.com/check"), StatusPanelForm.this.launcher.getProxy()), token.getType());
+                    final List<Map<String, ServerStatus>> statuses = (List<Map<String, ServerStatus>>)StatusPanelForm.this.gson.<List<Map<String, ServerStatus>>>fromJson(Http.performGet(new URL("http://status.mojang.com/check"), StatusPanelForm.this.launcher.getProxy()), token.getType());
                     for (final Map<String, ServerStatus> serverStatusInformation : statuses) {
                         if (serverStatusInformation.containsKey("login.minecraft.net")) {
-                            StatusPanelForm.this.loginStatus.setText(serverStatusInformation.get("login.minecraft.net").title);
+                            StatusPanelForm.this.loginStatus.setText(((ServerStatus)serverStatusInformation.get("login.minecraft.net")).title);
                         }
                         else {
                             if (!serverStatusInformation.containsKey("session.minecraft.net")) {
                                 continue;
                             }
-                            StatusPanelForm.this.sessionStatus.setText(serverStatusInformation.get("session.minecraft.net").title);
+                            StatusPanelForm.this.sessionStatus.setText(((ServerStatus)serverStatusInformation.get("session.minecraft.net")).title);
                         }
                     }
                 }

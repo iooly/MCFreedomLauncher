@@ -29,7 +29,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
         request.accessToken = authenticationToken;
         request.selectedProfile = profile.getId();
         request.serverId = serverId;
-        this.getAuthenticationService().makeRequest(YggdrasilMinecraftSessionService.JOIN_URL, request, Response.class,profile.getName());
+        this.getAuthenticationService().<Response>makeRequest(YggdrasilMinecraftSessionService.JOIN_URL, request, Response.class,profile.getName());
     }
     
     @Override
@@ -39,7 +39,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
         arguments.put("serverId", serverId);
         final URL url = HttpAuthenticationService.concatenateURL(YggdrasilMinecraftSessionService.CHECK_URL, HttpAuthenticationService.buildQuery(arguments));
         try {
-            final HasJoinedMinecraftServerResponse response = this.getAuthenticationService().makeRequest(url, null, HasJoinedMinecraftServerResponse.class,user.getName());
+            final HasJoinedMinecraftServerResponse response = (HasJoinedMinecraftServerResponse)this.getAuthenticationService().<HasJoinedMinecraftServerResponse>makeRequest(url, null, HasJoinedMinecraftServerResponse.class,user.getName());
             return (response != null && response.getId() != null) ? new GameProfile(response.getId(), user.getName()) : null;
         }
         catch (AuthenticationUnavailableException e) {

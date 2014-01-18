@@ -15,7 +15,7 @@ public class LegacyAuthenticationService extends HttpAuthenticationService
     
     @Override
     public LegacyUserAuthentication createUserAuthentication(final Agent agent) {
-        Validate.notNull(agent);
+        Validate.<Agent>notNull(agent);
         if (agent != Agent.MINECRAFT) {
             throw new IllegalArgumentException("Legacy authentication cannot handle anything but Minecraft");
         }

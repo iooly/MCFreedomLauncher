@@ -81,7 +81,7 @@ public class PlayerInfoPanel extends JPanel implements RefreshedProfilesListener
         final Profile profile = this.launcher.getProfileManager().getProfiles().isEmpty() ? null : this.launcher.getProfileManager().getSelectedProfile();
         final UserAuthentication auth = (profile == null) ? null : this.launcher.getProfileManager().getAuthDatabase().getByUUID(profile.getPlayerUUID());
         final List<VersionSyncInfo> versions = (profile == null) ? null : this.launcher.getVersionManager().getVersions(profile.getVersionFilter());
-        VersionSyncInfo version = (profile == null || versions.isEmpty()) ? null : versions.get(0);
+        VersionSyncInfo version = (profile == null || versions.isEmpty()) ? null : ((VersionSyncInfo)versions.get(0));
         if (profile != null && profile.getLastVersionId() != null) {
             final VersionSyncInfo requestedVersion = this.launcher.getVersionManager().getVersionSyncInfo(profile.getLastVersionId());
             if (requestedVersion != null && requestedVersion.getLatestVersion() != null) {

@@ -1,39 +1,31 @@
 package net.minecraft.launcher.updater;
 
-import org.apache.logging.log4j.LogManager;
-import java.io.InputStream;
+import com.google.gson.Gson;
+import net.minecraft.launcher.LauncherConstants;
+import net.minecraft.launcher.OperatingSystem;
+import net.minecraft.launcher.events.RefreshedVersionsListener;
+import net.minecraft.launcher.updater.download.DownloadJob;
+import net.minecraft.launcher.updater.download.Downloadable;
+import net.minecraft.launcher.updater.download.EtagDownloadable;
 import net.minecraft.launcher.updater.download.assets.AssetDownloadable;
 import net.minecraft.launcher.updater.download.assets.AssetIndex;
+import net.minecraft.launcher.versions.CompleteVersion;
+import net.minecraft.launcher.versions.ReleaseType;
+import net.minecraft.launcher.versions.Version;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import java.util.HashSet;
-import java.util.Set;
-import java.net.Proxy;
-import net.minecraft.launcher.updater.download.EtagDownloadable;
-import java.io.File;
-import java.net.URL;
-import net.minecraft.launcher.updater.download.Downloadable;
-import net.minecraft.launcher.updater.download.DownloadJob;
-import net.minecraft.launcher.OperatingSystem;
-import net.minecraft.launcher.versions.CompleteVersion;
-import java.util.Map;
-import java.util.Comparator;
-import net.minecraft.launcher.versions.Version;
-import java.util.EnumMap;
-import net.minecraft.launcher.versions.ReleaseType;
-import java.util.HashMap;
-import javax.swing.SwingUtilities;
-import java.util.Iterator;
-import java.util.Collection;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
-import com.google.gson.Gson;
-import net.minecraft.launcher.events.RefreshedVersionsListener;
-import java.util.List;
-import java.util.concurrent.ThreadPoolExecutor;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import javax.swing.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.Proxy;
+import java.net.URL;
+import java.util.*;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class VersionManager
 {
@@ -79,7 +71,7 @@ public class VersionManager
         final List<RefreshedVersionsListener> listeners = new ArrayList<RefreshedVersionsListener>(this.refreshedVersionsListeners);
         final Iterator<RefreshedVersionsListener> iterator = listeners.iterator();
         while (iterator.hasNext()) {
-            final RefreshedVersionsListener listener = iterator.next();
+            final RefreshedVersionsListener listener = (RefreshedVersionsListener)iterator.next();
             if (!listener.shouldReceiveEventsInUIThread()) {
                 listener.onVersionsRefreshed(this);
                 iterator.remove();
@@ -169,7 +161,7 @@ public class VersionManager
                 }
             }
         }
-        Collections.sort(result, new Comparator<VersionSyncInfo>() {
+        Collections.<VersionSyncInfo>sort(result, new Comparator<VersionSyncInfo>() {
             @Override
             public int compare(final VersionSyncInfo a, final VersionSyncInfo b) {
                 final Version aVer = a.getLatestVersion();
@@ -259,7 +251,7 @@ public class VersionManager
         final Proxy proxy = ((RemoteVersionList)this.remoteVersionList).getProxy();
         job.addDownloadables(version.getRequiredDownloadables(OperatingSystem.getCurrentPlatform(), proxy, baseDirectory, false));
         final String jarFile = "versions/" + version.getId() + "/" + version.getId() + ".jar";
-        job.addDownloadables(new EtagDownloadable(proxy, new URL("https://s3.amazonaws.com/Minecraft.Download/" + jarFile), new File(baseDirectory, jarFile), false));
+        job.addDownloadables(new EtagDownloadable(proxy, new URL(LauncherConstants.URL_DOWNLOAD_BASE + jarFile), new File(baseDirectory, jarFile), false));
         return job;
     }
     
@@ -286,12 +278,12 @@ public class VersionManager
             inputStream = indexUrl.openConnection(proxy).getInputStream();
             final String json = IOUtils.toString(inputStream);
             FileUtils.writeStringToFile(indexFile, json);
-            final AssetIndex index = this.gson.fromJson(json, AssetIndex.class);
+            final AssetIndex index = (AssetIndex)this.gson.<AssetIndex>fromJson(json, AssetIndex.class);
             for (final AssetIndex.AssetObject object : index.getUniqueObjects()) {
                 final String filename = object.getHash().substring(0, 2) + "/" + object.getHash();
                 final File file = new File(objectsFolder, filename);
                 if (!file.isFile() || FileUtils.sizeOf(file) != object.getSize()) {
-                    final Downloadable downloadable = new AssetDownloadable(proxy, new URL("http://resources.download.minecraft.net/" + filename), file, false, object.getHash(), object.getSize());
+                    final Downloadable downloadable = new AssetDownloadable(proxy, new URL( LauncherConstants.URL_RESOURCE_BASE+ filename), file, false, object.getHash(), object.getSize());
                     downloadable.setExpectedSize(object.getSize());
                     result.add(downloadable);
                 }

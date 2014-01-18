@@ -19,7 +19,7 @@ public class ExtractRules
         super();
         this.exclude = new ArrayList<String>();
         if (exclude != null) {
-            Collections.addAll(this.exclude, exclude);
+            Collections.<String>addAll(this.exclude, exclude);
         }
     }
     

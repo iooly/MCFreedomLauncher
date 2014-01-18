@@ -5,7 +5,7 @@ import java.net.URI;
 
 public class LauncherConstants
 {
-    public static final String VERSION_NAME = "1.3.7";
+    public static final String VERSION_NAME = "1.3.8";
     public static final int VERSION_NUMERIC = 13;
     public static final URI URL_REGISTER;
     public static final String URL_DOWNLOAD_BASE = "https://s3.amazonaws.com/Minecraft.Download/";
@@ -22,6 +22,7 @@ public class LauncherConstants
     public static final URI URL_FORGOT_USERNAME;
     public static final URI URL_FORGOT_PASSWORD_MINECRAFT;
     public static final URI URL_FORGOT_MIGRATED_EMAIL;
+    public static final URI URL_DEMO_HELP;
     public static final int MAX_NATIVES_LIFE_IN_SECONDS = 3600;
     public static final String DEFAULT_VERSION_INCOMPATIBILITY_REASON = "This version is incompatible with your computer. Please try another one by going into Edit Profile and selecting one through the dropdown. Sorry!";
     
@@ -41,5 +42,6 @@ public class LauncherConstants
         URL_FORGOT_USERNAME = constantURI("http://help.mojang.com/customer/portal/articles/1233873?ref=launcher");
         URL_FORGOT_PASSWORD_MINECRAFT = constantURI("http://help.mojang.com/customer/portal/articles/329524-change-or-forgot-password?ref=launcher");
         URL_FORGOT_MIGRATED_EMAIL = constantURI("http://help.mojang.com/customer/portal/articles/1205055-minecraft-launcher-error---migrated-account?ref=launcher");
+        URL_DEMO_HELP = constantURI("https://help.mojang.com/customer/portal/articles/1218766-can-only-play-minecraft-demo?ref=launcher");
     }
 }

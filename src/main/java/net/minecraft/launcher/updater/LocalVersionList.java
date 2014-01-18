@@ -53,7 +53,7 @@ public class LocalVersionList extends FileBasedVersionList
             if (directory.isDirectory() && jsonFile.exists()) {
                 try {
                     final String path = "versions/" + id + "/" + id + ".json";
-                    final CompleteVersion version = this.gson.fromJson(this.getContent(path), CompleteVersion.class);
+                    final CompleteVersion version = (CompleteVersion)this.gson.<CompleteVersion>fromJson(this.getContent(path), CompleteVersion.class);
                     if (version.getType() == null) {
                         LocalVersionList.LOGGER.warn("Ignoring: " + path + "; it has an invalid version specified");
                         return;

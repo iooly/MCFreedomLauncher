@@ -31,17 +31,17 @@ public final class HopperService
             }
         }
         final SubmitRequest request = new SubmitRequest(report, product, version, environment);
-        return makeRequest(proxy, HopperService.ROUTE_SUBMIT, request, SubmitResponse.class);
+        return HopperService.<SubmitResponse>makeRequest(proxy, HopperService.ROUTE_SUBMIT, request, SubmitResponse.class);
     }
     
     public static PublishResponse publishReport(final Proxy proxy, final Report report) throws IOException {
         final PublishRequest request = new PublishRequest(report);
-        return makeRequest(proxy, HopperService.ROUTE_PUBLISH, request, PublishResponse.class);
+        return HopperService.<PublishResponse>makeRequest(proxy, HopperService.ROUTE_PUBLISH, request, PublishResponse.class);
     }
     
     private static <T extends Response> T makeRequest(final Proxy proxy, final URL url, final Object input, final Class<T> classOfT) throws IOException {
         final String jsonResult = Util.performPost(url, HopperService.GSON.toJson(input), proxy, "application/json", true);
-        final T result = HopperService.GSON.fromJson(jsonResult, classOfT);
+        final T result = (T)HopperService.GSON.<T>fromJson(jsonResult, classOfT);
         if (result == null) {
             return null;
         }

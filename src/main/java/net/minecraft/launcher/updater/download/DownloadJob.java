@@ -1,13 +1,17 @@
 package net.minecraft.launcher.updater.download;
 
-import org.apache.commons.lang3.time.StopWatch;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.Iterator;
+import java.util.Collections;
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Collection;
+import org.apache.commons.lang3.time.StopWatch;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
+import java.util.Queue;
+import org.apache.logging.log4j.Logger;
 
 public class DownloadJob
 {
@@ -29,10 +33,10 @@ public class DownloadJob
     public DownloadJob(final String name, final boolean ignoreFailures, final DownloadListener listener, final Collection<Downloadable> files) {
         super();
         this.remainingFiles = new ConcurrentLinkedQueue<Downloadable>();
-        this.allFiles = Collections.synchronizedList(new ArrayList<Downloadable>());
-        this.failures = Collections.synchronizedList(new ArrayList<Downloadable>());
-        this.successful = Collections.synchronizedList(new ArrayList<Downloadable>());
-        this.progressContainers = Collections.synchronizedList(new ArrayList<ProgressContainer>());
+        this.allFiles = Collections.<Downloadable>synchronizedList(new ArrayList<Downloadable>());
+        this.failures = Collections.<Downloadable>synchronizedList(new ArrayList<Downloadable>());
+        this.successful = Collections.<Downloadable>synchronizedList(new ArrayList<Downloadable>());
+        this.progressContainers = Collections.<ProgressContainer>synchronizedList(new ArrayList<ProgressContainer>());
         this.remainingThreads = new AtomicInteger();
         this.stopWatch = new StopWatch();
         this.name = name;

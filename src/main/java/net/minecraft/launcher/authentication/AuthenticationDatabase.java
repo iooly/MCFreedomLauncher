@@ -43,7 +43,7 @@ public class AuthenticationDatabase
             return null;
         }
         for (final Map.Entry<String, UserAuthentication> entry : this.authById.entrySet()) {
-            final GameProfile profile = entry.getValue().getSelectedProfile();
+            final GameProfile profile = ((UserAuthentication)entry.getValue()).getSelectedProfile();
             if (profile != null && profile.getName().equals(name)) {
                 return entry.getValue();
             }
@@ -61,7 +61,7 @@ public class AuthenticationDatabase
     public Collection<String> getKnownNames() {
         final List<String> names = new ArrayList<String>();
         for (final Map.Entry<String, UserAuthentication> entry : this.authById.entrySet()) {
-            final GameProfile profile = entry.getValue().getSelectedProfile();
+            final GameProfile profile = ((UserAuthentication)entry.getValue()).getSelectedProfile();
             if (profile != null) {
                 names.add(profile.getName());
             }
@@ -101,7 +101,7 @@ public class AuthenticationDatabase
         public AuthenticationDatabase deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
             final TypeToken<HashMap<String, Map<String, String>>> token = new TypeToken<HashMap<String, Map<String, String>>>() {};
             final Map<String, UserAuthentication> services = new HashMap<String, UserAuthentication>();
-            final Map<String, Map<String, String>> credentials = context.deserialize(json, token.getType());
+            final Map<String, Map<String, String>> credentials = (Map<String, Map<String, String>>)context.<Map<String, Map<String, String>>>deserialize(json, token.getType());
             final YggdrasilAuthenticationService authService = new YggdrasilAuthenticationService(Launcher.getInstance().getProxy(), Launcher.getInstance().getClientToken().toString());
             for (final Map.Entry<String, Map<String, String>> entry : credentials.entrySet()) {
                 final UserAuthentication auth = authService.createUserAuthentication(Agent.MINECRAFT);
@@ -116,7 +116,7 @@ public class AuthenticationDatabase
             final Map<String, UserAuthentication> services = src.authById;
             final Map<String, Map<String, String>> credentials = new HashMap<String, Map<String, String>>();
             for (final Map.Entry<String, UserAuthentication> entry : services.entrySet()) {
-                credentials.put(entry.getKey(), entry.getValue().saveForStorage());
+                credentials.put(entry.getKey(), ((UserAuthentication)entry.getValue()).saveForStorage());
             }
             return context.serialize(credentials);
         }

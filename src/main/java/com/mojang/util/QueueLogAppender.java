@@ -48,7 +48,7 @@ public class QueueLogAppender extends AbstractAppender
             return null;
         }
         QueueLogAppender.QUEUE_LOCK.writeLock().lock();
-        BlockingQueue<String> queue = QueueLogAppender.QUEUES.get(name);
+        BlockingQueue<String> queue = (BlockingQueue<String>)QueueLogAppender.QUEUES.get(name);
         if (queue == null) {
             queue = new LinkedBlockingQueue<String>();
             QueueLogAppender.QUEUES.put(name, queue);
@@ -62,7 +62,7 @@ public class QueueLogAppender extends AbstractAppender
     
     public static String getNextLogEvent(final String queueName) {
         QueueLogAppender.QUEUE_LOCK.readLock().lock();
-        final BlockingQueue<String> queue = QueueLogAppender.QUEUES.get(queueName);
+        final BlockingQueue<String> queue = (BlockingQueue<String>)QueueLogAppender.QUEUES.get(queueName);
         QueueLogAppender.QUEUE_LOCK.readLock().unlock();
         if (queue != null) {
             try {

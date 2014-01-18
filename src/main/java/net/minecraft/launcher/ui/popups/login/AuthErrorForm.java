@@ -78,7 +78,7 @@ public class AuthErrorForm extends JPanel
             public void run() {
                 try {
                     final TypeToken<Map<String, ServerStatus>> token = new TypeToken<Map<String, ServerStatus>>() {};
-                    final Map<String, ServerStatus> statuses = AuthErrorForm.this.gson.fromJson(Http.performGet(new URL("http://status.mojang.com/check?service=authserver.mojang.com"), AuthErrorForm.this.popup.getLauncher().getProxy()), token.getType());
+                    final Map<String, ServerStatus> statuses = (Map<String, ServerStatus>)AuthErrorForm.this.gson.<Map<String, ServerStatus>>fromJson(Http.performGet(new URL("http://status.mojang.com/check?service=authserver.mojang.com"), AuthErrorForm.this.popup.getLauncher().getProxy()), token.getType());
                     if (statuses.get("authserver.mojang.com") == ServerStatus.RED) {
                         AuthErrorForm.this.displayError(null, "It looks like our servers are down right now. Sorry!", "We're already working on the problem and will have it fixed soon.", "Please try again later!");
                     }

@@ -15,7 +15,7 @@ public class VersionFilter
         super();
         this.types = new HashSet<ReleaseType>();
         this.maxCount = 5;
-        Collections.addAll(this.types, ReleaseType.values());
+        Collections.<ReleaseType>addAll(this.types, ReleaseType.values());
     }
     
     public Set<ReleaseType> getTypes() {
@@ -30,7 +30,7 @@ public class VersionFilter
     
     public VersionFilter includeTypes(final ReleaseType... types) {
         if (types != null) {
-            Collections.addAll(this.types, types);
+            Collections.<ReleaseType>addAll(this.types, types);
         }
         return this;
     }

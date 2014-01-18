@@ -69,14 +69,14 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication
         }
         YggdrasilUserAuthentication.LOGGER.info("Logging in with username & password");
         final AuthenticationRequest request = new AuthenticationRequest(this, this.getUsername(), this.getPassword());
-        final AuthenticationResponse response = this.getAuthenticationService().makeRequest(YggdrasilUserAuthentication.ROUTE_AUTHENTICATE, request, AuthenticationResponse.class,this.getUsername());
+        final AuthenticationResponse response = (AuthenticationResponse)this.getAuthenticationService().<AuthenticationResponse>makeRequest(YggdrasilUserAuthentication.ROUTE_AUTHENTICATE, request, AuthenticationResponse.class,this.getUsername());
         if (!response.getClientToken().equals(this.getAuthenticationService().getClientToken())) {
         //    throw new AuthenticationException("Server requested we change our client token. Don't know how to handle this!");
         }
         if (response.getSelectedProfile() != null) {
             this.setUserType(response.getSelectedProfile().isLegacy() ? UserType.LEGACY : UserType.MOJANG);
         }
-        else if (ArrayUtils.isNotEmpty(response.getAvailableProfiles())) {
+        else if (ArrayUtils.<GameProfile>isNotEmpty(response.getAvailableProfiles())) {
             this.setUserType(response.getAvailableProfiles()[0].isLegacy() ? UserType.LEGACY : UserType.MOJANG);
         }
         final User user = response.getUser();
@@ -100,7 +100,7 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication
         }
         if (user.getProperties() != null) {
             for (final User.Property property : user.getProperties()) {
-                Collection<String> values = this.getModifiableUserProperties().get(property.getKey());
+                Collection<String> values = (Collection<String>)this.getModifiableUserProperties().get(property.getKey());
                 if (values == null) {
                     values = new ArrayList<String>();
                     this.getModifiableUserProperties().put(property.getKey(), values);
@@ -122,14 +122,14 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication
         }
         YggdrasilUserAuthentication.LOGGER.info("Logging in with access token");
         final RefreshRequest request = new RefreshRequest(this);
-        final RefreshResponse response = this.getAuthenticationService().makeRequest(YggdrasilUserAuthentication.ROUTE_REFRESH, request, RefreshResponse.class,this.getUsername());
+        final RefreshResponse response = (RefreshResponse)this.getAuthenticationService().<RefreshResponse>makeRequest(YggdrasilUserAuthentication.ROUTE_REFRESH, request, RefreshResponse.class,this.getUsername());
         if (!response.getClientToken().equals(this.getAuthenticationService().getClientToken())) {
          //   throw new AuthenticationException("Server requested we change our client token. Don't know how to handle this!");
         }
         if (response.getSelectedProfile() != null) {
             this.setUserType(response.getSelectedProfile().isLegacy() ? UserType.LEGACY : UserType.MOJANG);
         }
-        else if (ArrayUtils.isNotEmpty(response.getAvailableProfiles())) {
+        else if (ArrayUtils.<GameProfile>isNotEmpty(response.getAvailableProfiles())) {
             this.setUserType(response.getAvailableProfiles()[0].isLegacy() ? UserType.LEGACY : UserType.MOJANG);
         }
         if (response.getUser() != null && response.getUser().getId() != null) {
@@ -181,7 +181,7 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication
             throw new IllegalArgumentException("Invalid profile '" + profile + "'");
         }
         final RefreshRequest request = new RefreshRequest(this, profile);
-        final RefreshResponse response = this.getAuthenticationService().makeRequest(YggdrasilUserAuthentication.ROUTE_REFRESH, request, RefreshResponse.class,this.getUsername());
+        final RefreshResponse response = (RefreshResponse)this.getAuthenticationService().<RefreshResponse>makeRequest(YggdrasilUserAuthentication.ROUTE_REFRESH, request, RefreshResponse.class,this.getUsername());
         if (!response.getClientToken().equals(this.getAuthenticationService().getClientToken())) {
             throw new AuthenticationException("Server requested we change our client token. Don't know how to handle this!");
         }

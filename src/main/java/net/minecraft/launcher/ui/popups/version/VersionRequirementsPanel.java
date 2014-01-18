@@ -1,11 +1,23 @@
 package net.minecraft.launcher.ui.popups.version;
 
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.JLabel;
+import javax.swing.Box;
+import java.awt.Component;
+import java.awt.Container;
+import javax.swing.BoxLayout;
+import java.awt.Insets;
+import java.awt.GridBagConstraints;
+import javax.swing.border.Border;
+import javax.swing.BorderFactory;
+import java.awt.LayoutManager;
+import java.awt.GridBagLayout;
+import javax.swing.JTextField;
+import javax.swing.JSpinner;
+import javax.swing.JPanel;
 
 public class VersionRequirementsPanel extends JPanel
 {
@@ -34,7 +46,7 @@ public class VersionRequirementsPanel extends JPanel
         launcherPanel.setLayout(new BoxLayout(launcherPanel, 0));
         launcherPanel.add(this.launcherVersion);
         launcherPanel.add(Box.createHorizontalStrut(5));
-        launcherPanel.add(new JLabel("(Current version, 1.3.7, is numerical 13)"));
+        launcherPanel.add(new JLabel("(Current version, 1.3.8, is numerical 13)"));
         this.add(new JLabel("Required Launcher:"), constraints);
         constraints.fill = 2;
         constraints.weightx = 1.0;

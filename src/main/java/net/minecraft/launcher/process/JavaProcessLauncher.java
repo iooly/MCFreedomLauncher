@@ -40,7 +40,7 @@ public class JavaProcessLauncher
     }
     
     public void addCommands(final String... commands) {
-        this.commands.addAll(Arrays.asList(commands));
+        this.commands.addAll(Arrays.<String>asList(commands));
     }
     
     public void addSplitCommands(final String commands) {

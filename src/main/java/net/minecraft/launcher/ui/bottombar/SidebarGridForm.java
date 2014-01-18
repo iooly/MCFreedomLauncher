@@ -18,7 +18,7 @@ public abstract class SidebarGridForm extends JPanel
     protected abstract void populateGrid(final GridBagConstraints p0);
     
     protected <T extends Component> T add(final T component, final GridBagConstraints constraints, final int x, final int y, final int weight, final int width) {
-        return this.add(component, constraints, x, y, weight, width, 10);
+        return this.<T>add(component, constraints, x, y, weight, width, 10);
     }
     
     protected <T extends Component> T add(final T component, final GridBagConstraints constraints, final int x, final int y, final int weight, final int width, final int anchor) {

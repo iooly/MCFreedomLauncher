@@ -1,16 +1,27 @@
 package net.minecraft.launcher.ui.popups.login;
 
-import com.mojang.authlib.UserAuthentication;
-import com.mojang.authlib.exceptions.AuthenticationException;
-import net.minecraft.launcher.authentication.AuthenticationDatabase;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
+import javax.swing.SwingUtilities;
+import com.mojang.authlib.exceptions.AuthenticationException;
+import com.mojang.authlib.UserAuthentication;
+import java.awt.event.ActionEvent;
+import java.awt.Font;
+import javax.swing.JPopupMenu;
+import java.awt.Insets;
+import java.awt.Component;
+import javax.swing.JLabel;
+import javax.swing.Box;
+import java.awt.GridBagConstraints;
+import java.awt.LayoutManager;
+import java.awt.GridBagLayout;
+import java.util.Iterator;
+import javax.swing.JButton;
+import net.minecraft.launcher.authentication.AuthenticationDatabase;
+import javax.swing.JComboBox;
+import org.apache.logging.log4j.Logger;
+import java.awt.event.ActionListener;
+import javax.swing.JPanel;
 
 public class ExistingUserListForm extends JPanel implements ActionListener
 {
@@ -49,7 +60,7 @@ public class ExistingUserListForm extends JPanel implements ActionListener
         constraints.gridwidth = 2;
         constraints.weightx = 1.0;
         this.add(Box.createGlue());
-        final String currentUser = (this.authDatabase.getKnownNames().size() == 1) ? this.authDatabase.getKnownNames().iterator().next() : (this.authDatabase.getKnownNames().size() + " different users");
+        final String currentUser = (this.authDatabase.getKnownNames().size() == 1) ? ((String)this.authDatabase.getKnownNames().iterator().next()) : (this.authDatabase.getKnownNames().size() + " different users");
         final String thisOrThese = (this.authDatabase.getKnownNames().size() == 1) ? "this account" : "one of these accounts";
         this.add(new JLabel("You're already logged in as " + currentUser + " in another profile."), constraints);
         this.add(new JLabel("You may use " + thisOrThese + " and skip authentication."), constraints);

@@ -1,39 +1,51 @@
 package net.minecraft.launcher;
 
+import org.apache.logging.log4j.LogManager;
+import java.io.InputStream;
+import java.awt.Image;
+import javax.imageio.ImageIO;
+import java.awt.event.WindowListener;
+import java.awt.event.WindowAdapter;
+import java.awt.Dimension;
+import java.awt.AWTEvent;
+import java.awt.Window;
+import java.awt.event.WindowEvent;
+import java.util.Iterator;
+import net.minecraft.launcher.ui.popups.login.LogInPopup;
+import java.util.Map;
 import com.mojang.authlib.Agent;
 import com.mojang.authlib.UserAuthentication;
-import com.mojang.authlib.exceptions.AuthenticationException;
-import com.mojang.authlib.exceptions.InvalidCredentialsException;
 import net.minecraft.launcher.profile.Profile;
-import net.minecraft.launcher.profile.ProfileManager;
-import net.minecraft.launcher.ui.LauncherPanel;
-import net.minecraft.launcher.ui.popups.login.LogInPopup;
-import net.minecraft.launcher.updater.ExceptionalThreadPoolExecutor;
-import net.minecraft.launcher.updater.LocalVersionList;
-import net.minecraft.launcher.updater.RemoteVersionList;
-import net.minecraft.launcher.updater.VersionManager;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.File;
+import com.mojang.authlib.exceptions.InvalidCredentialsException;
+import com.mojang.authlib.exceptions.AuthenticationException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.PasswordAuthentication;
-import java.net.Proxy;
-import java.net.URI;
+import javax.swing.border.Border;
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
+import javax.swing.UIManager;
 import java.net.URISyntaxException;
-import java.text.DateFormat;
+import java.net.URI;
+import javax.swing.Icon;
+import java.awt.Component;
+import javax.swing.JOptionPane;
 import java.util.Date;
+import java.text.DateFormat;
 import java.util.Locale;
-import java.util.Map;
+import net.minecraft.launcher.updater.VersionList;
+import net.minecraft.launcher.updater.RemoteVersionList;
+import net.minecraft.launcher.updater.LocalVersionList;
+import net.minecraft.launcher.updater.ExceptionalThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.UUID;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import net.minecraft.launcher.profile.ProfileManager;
+import java.net.PasswordAuthentication;
+import java.net.Proxy;
+import java.io.File;
+import net.minecraft.launcher.ui.LauncherPanel;
+import javax.swing.JFrame;
+import net.minecraft.launcher.updater.VersionManager;
+import org.apache.logging.log4j.Logger;
 
 public class Launcher
 {
@@ -271,7 +283,7 @@ public class Launcher
     
     protected void initializeFrame() {
         this.frame.getContentPane().removeAll();
-        this.frame.setTitle("Minecraft Launcher 1.3.7");
+        this.frame.setTitle("Minecraft Launcher 1.3.8");
         this.frame.setPreferredSize(new Dimension(900, 580));
         this.frame.setDefaultCloseOperation(2);
         this.frame.addWindowListener(new WindowAdapter() {

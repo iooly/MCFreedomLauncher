@@ -1,11 +1,13 @@
 package net.minecraft.launcher.updater;
 
-import java.io.IOException;
 import net.minecraft.launcher.Http;
-import java.net.URL;
+import net.minecraft.launcher.LauncherConstants;
 import net.minecraft.launcher.OperatingSystem;
 import net.minecraft.launcher.versions.CompleteVersion;
+
+import java.io.IOException;
 import java.net.Proxy;
+import java.net.URL;
 
 public class RemoteVersionList extends VersionList
 {
@@ -23,7 +25,7 @@ public class RemoteVersionList extends VersionList
     
     @Override
     protected String getContent(final String path) throws IOException {
-        return Http.performGet(new URL("https://s3.amazonaws.com/Minecraft.Download/" + path), this.proxy);
+        return Http.performGet(new URL(LauncherConstants.URL_DOWNLOAD_BASE + path), this.proxy);
     }
     
     public Proxy getProxy() {

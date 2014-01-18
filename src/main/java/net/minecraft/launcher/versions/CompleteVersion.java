@@ -176,7 +176,7 @@ public class CompleteVersion implements Version
         final Set<String> neededFiles = new HashSet<String>();
         for (final Library library : this.getRelevantLibraries()) {
             if (library.getNatives() != null) {
-                final String natives = library.getNatives().get(os);
+                final String natives = (String)library.getNatives().get(os);
                 if (natives == null) {
                     continue;
                 }
@@ -194,7 +194,7 @@ public class CompleteVersion implements Version
         for (final Library library : this.getRelevantLibraries()) {
             String file = null;
             if (library.getNatives() != null) {
-                final String natives = library.getNatives().get(os);
+                final String natives = (String)library.getNatives().get(os);
                 if (natives != null) {
                     file = library.getArtifactPath(natives);
                 }
