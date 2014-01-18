@@ -22,6 +22,7 @@ public class Main {
 
     public static void main(String[] args)
             throws IOException {
+
         Launcher.setLookAndFeel();
         LocaleHelper.setCurrentLocale(LangSelection.getLocale());
 
@@ -92,9 +93,10 @@ public class Main {
         // JOptionPane.showMessageDialog(null, "You have selected: " + LocaleHelper.getCurrentLocale());
 
         JFrame frame = new JFrame();
+       workingDirectory= InstallDirSettings.loadAtStartup(frame, workingDirectory) ;
+        System.out.println(workingDirectory);
 
-
-        new Launcher(frame, workingDirectory, proxy, passwordAuthentication, args);
+        new Launcher(frame, workingDirectory, proxy, passwordAuthentication, args,4);
     }
 
     public static boolean stringHasValue(String string) {

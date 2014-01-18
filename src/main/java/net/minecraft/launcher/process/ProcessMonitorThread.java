@@ -1,45 +1,49 @@
 package net.minecraft.launcher.process;
 
-import net.minecraft.launcher.Launcher;
-
-import java.io.BufferedReader;
+import org.apache.logging.log4j.LogManager;
+import org.apache.commons.io.IOUtils;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.logging.log4j.Logger;
 
-public class ProcessMonitorThread extends Thread {
+public class ProcessMonitorThread extends Thread
+{
+    private static final Logger LOGGER;
     private final JavaProcess process;
-
-    public ProcessMonitorThread(JavaProcess process) {
+    
+    public ProcessMonitorThread(final JavaProcess process) {
+        super();
         this.process = process;
     }
-
+    
+    @Override
     public void run() {
-        InputStreamReader reader = new InputStreamReader(this.process.getRawProcess().getInputStream());
-        BufferedReader buf = new BufferedReader(reader);
+        final InputStreamReader reader = new InputStreamReader(this.process.getRawProcess().getInputStream());
+        final BufferedReader buf = new BufferedReader(reader);
         String line = null;
-
         while (this.process.isRunning()) {
             try {
                 while ((line = buf.readLine()) != null) {
-                    Launcher.getInstance().println("Client> " + line);
+                    ProcessMonitorThread.LOGGER.info("Client> " + line);
                     this.process.getSysOutLines().add(line);
                 }
-            } catch (IOException ex) {
-                Logger.getLogger(ProcessMonitorThread.class.getName()).log(Level.SEVERE, null, ex);
-            } finally {
-                try {
-                    buf.close();
-                } catch (IOException ex) {
-                    Logger.getLogger(ProcessMonitorThread.class.getName()).log(Level.SEVERE, null, ex);
-                }
+            }
+            catch (IOException ex) {
+                ProcessMonitorThread.LOGGER.error(ex);
+            }
+            finally {
+                IOUtils.closeQuietly(reader);
             }
         }
-
-        JavaProcessRunnable onExit = this.process.getExitRunnable();
-
-        if (onExit != null)
+        final JavaProcessRunnable onExit = this.process.getExitRunnable();
+        if (onExit != null) {
             onExit.onJavaProcessEnded(this.process);
+        }
+    }
+    
+    static {
+        LOGGER = LogManager.getLogger();
     }
 }

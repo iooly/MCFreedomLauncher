@@ -1,154 +1,164 @@
 package net.minecraft.launcher.ui.bottombar;
 
-import net.minecraft.launcher.Launcher;
-import net.minecraft.launcher.events.RefreshedProfilesListener;
-import net.minecraft.launcher.locale.LocaleHelper;
+import javax.swing.JList;
+import javax.swing.plaf.basic.BasicComboBoxRenderer;
+import org.apache.logging.log4j.LogManager;
+import net.minecraft.launcher.ui.popups.profile.ProfileEditorPopup;
+import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.awt.event.ItemEvent;
+import java.util.Iterator;
+import java.util.Collection;
 import net.minecraft.launcher.profile.Profile;
 import net.minecraft.launcher.profile.ProfileManager;
-import net.minecraft.launcher.ui.popups.profile.ProfileEditorPopup;
-
-import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import javax.swing.plaf.basic.BasicComboBoxRenderer;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
+import java.awt.GridLayout;
+import java.awt.Component;
+import javax.swing.JLabel;
+import java.awt.GridBagConstraints;
+import java.awt.LayoutManager;
+import java.awt.GridBagLayout;
+import javax.swing.ListCellRenderer;
+import net.minecraft.launcher.Launcher;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import org.apache.logging.log4j.Logger;
+import net.minecraft.launcher.events.RefreshedProfilesListener;
 import java.awt.event.ItemListener;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.ResourceBundle;
+import java.awt.event.ActionListener;
+import javax.swing.JPanel;
 
-public class ProfileSelectionPanel extends JPanel
-        implements ActionListener, ItemListener, RefreshedProfilesListener {
-    private ResourceBundle resourceBundle = LocaleHelper.getMessages();
-    private final JComboBox profileList = new JComboBox();
-    private final JButton newProfileButton = new JButton(resourceBundle.getString("new.profile"));
-    private final JButton editProfileButton = new JButton(resourceBundle.getString("edit.profile"));
+public class ProfileSelectionPanel extends JPanel implements ActionListener, ItemListener, RefreshedProfilesListener
+{
+    private static final Logger LOGGER;
+    private final JComboBox profileList;
+    private final JButton newProfileButton;
+    private final JButton editProfileButton;
     private final Launcher launcher;
     private boolean skipSelectionUpdate;
-
-    public ProfileSelectionPanel(Launcher launcher) {
+    
+    public ProfileSelectionPanel(final Launcher launcher) {
+        super();
+        this.profileList = new JComboBox();
+        this.newProfileButton = new JButton("New Profile");
+        this.editProfileButton = new JButton("Edit Profile");
         this.launcher = launcher;
-
         this.profileList.setRenderer(new ProfileListRenderer());
         this.profileList.addItemListener(this);
-        this.profileList.addItem(resourceBundle.getString("loading.profiles"));
-
+        this.profileList.addItem("Loading profiles...");
         this.newProfileButton.addActionListener(this);
         this.editProfileButton.addActionListener(this);
-
-        createInterface();
-
+        this.createInterface();
         launcher.getProfileManager().addRefreshedProfilesListener(this);
     }
-
+    
     protected void createInterface() {
-        setLayout(new GridBagLayout());
-        GridBagConstraints constraints = new GridBagConstraints();
+        this.setLayout(new GridBagLayout());
+        final GridBagConstraints constraints = new GridBagConstraints();
         constraints.fill = 2;
-        constraints.weightx = 0.0D;
-
+        constraints.weightx = 0.0;
         constraints.gridy = 0;
-
-        add(new JLabel(resourceBundle.getString("profile")), constraints);
+        this.add(new JLabel("Profile: "), constraints);
         constraints.gridx = 1;
-        add(this.profileList, constraints);
+        this.add(this.profileList, constraints);
         constraints.gridx = 0;
-
-        constraints.gridy += 1;
-
-        JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
+        final GridBagConstraints gridBagConstraints = constraints;
+        ++gridBagConstraints.gridy;
+        final JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
         buttonPanel.setBorder(new EmptyBorder(2, 0, 0, 0));
         buttonPanel.add(this.newProfileButton);
         buttonPanel.add(this.editProfileButton);
-
         constraints.gridwidth = 2;
-        add(buttonPanel, constraints);
+        this.add(buttonPanel, constraints);
         constraints.gridwidth = 1;
-
-        constraints.gridy += 1;
+        final GridBagConstraints gridBagConstraints2 = constraints;
+        ++gridBagConstraints2.gridy;
     }
-
-    public void onProfilesRefreshed(ProfileManager manager) {
-        populateProfiles();
+    
+    @Override
+    public void onProfilesRefreshed(final ProfileManager manager) {
+        this.populateProfiles();
     }
-
+    
+    @Override
     public boolean shouldReceiveEventsInUIThread() {
         return true;
     }
-
+    
     public void populateProfiles() {
-        String previous = this.launcher.getProfileManager().getSelectedProfile().getName();
+        final String previous = this.launcher.getProfileManager().getSelectedProfile().getName();
         Profile selected = null;
-        Collection profiles = this.launcher.getProfileManager().getProfiles().values();
+        final Collection<Profile> profiles = this.launcher.getProfileManager().getProfiles().values();
         this.profileList.removeAllItems();
-
         this.skipSelectionUpdate = true;
-
-        for (Profile profile : (Collection<Profile>) profiles) {
+        for (final Profile profile : profiles) {
             if (previous.equals(profile.getName())) {
                 selected = profile;
             }
-
             this.profileList.addItem(profile);
         }
-
         if (selected == null) {
             if (profiles.isEmpty()) {
                 selected = this.launcher.getProfileManager().getSelectedProfile();
                 this.profileList.addItem(selected);
             }
-
-            selected = (Profile) profiles.iterator().next();
+            selected = profiles.iterator().next();
         }
-
         this.profileList.setSelectedItem(selected);
         this.skipSelectionUpdate = false;
     }
-
-    public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() != 1) return;
-
-        if ((!this.skipSelectionUpdate) && ((e.getItem() instanceof Profile))) {
-            Profile profile = (Profile) e.getItem();
+    
+    @Override
+    public void itemStateChanged(final ItemEvent e) {
+        if (e.getStateChange() != 1) {
+            return;
+        }
+        if (!this.skipSelectionUpdate && e.getItem() instanceof Profile) {
+            final Profile profile = (Profile)e.getItem();
             this.launcher.getProfileManager().setSelectedProfile(profile.getName());
             try {
                 this.launcher.getProfileManager().saveProfiles();
-            } catch (IOException e1) {
-                this.launcher.println("Couldn't save new selected profile", e1);
+            }
+            catch (IOException e2) {
+                ProfileSelectionPanel.LOGGER.error("Couldn't save new selected profile", e2);
             }
             this.launcher.ensureLoggedIn();
         }
     }
-
-    public void actionPerformed(ActionEvent e) {
+    
+    @Override
+    public void actionPerformed(final ActionEvent e) {
         if (e.getSource() == this.newProfileButton) {
-            Profile profile = new Profile(this.launcher.getProfileManager().getSelectedProfile());
+            final Profile profile = new Profile(this.launcher.getProfileManager().getSelectedProfile());
             profile.setName("Copy of " + profile.getName());
-
             while (this.launcher.getProfileManager().getProfiles().containsKey(profile.getName())) {
                 profile.setName(profile.getName() + "_");
             }
-
-            ProfileEditorPopup.showEditProfileDialog(getLauncher(), profile);
+            ProfileEditorPopup.showEditProfileDialog(this.getLauncher(), profile);
             this.launcher.getProfileManager().setSelectedProfile(profile.getName());
-        } else if (e.getSource() == this.editProfileButton) {
-            Profile profile = this.launcher.getProfileManager().getSelectedProfile();
-            ProfileEditorPopup.showEditProfileDialog(getLauncher(), profile);
+        }
+        else if (e.getSource() == this.editProfileButton) {
+            final Profile profile = this.launcher.getProfileManager().getSelectedProfile();
+            ProfileEditorPopup.showEditProfileDialog(this.getLauncher(), profile);
         }
     }
-
+    
     public Launcher getLauncher() {
         return this.launcher;
     }
-
-    private static class ProfileListRenderer extends BasicComboBoxRenderer {
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            if ((value instanceof Profile)) {
-                value = ((Profile) value).getName();
+    
+    static {
+        LOGGER = LogManager.getLogger();
+    }
+    
+    private static class ProfileListRenderer extends BasicComboBoxRenderer
+    {
+        @Override
+        public Component getListCellRendererComponent(final JList list, Object value, final int index, final boolean isSelected, final boolean cellHasFocus) {
+            if (value instanceof Profile) {
+                value = ((Profile)value).getName();
             }
-
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             return this;
         }

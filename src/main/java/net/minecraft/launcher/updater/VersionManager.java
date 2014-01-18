@@ -1,134 +1,180 @@
 package net.minecraft.launcher.updater;
 
-import net.minecraft.launcher.Launcher;
-import net.minecraft.launcher.OperatingSystem;
-import net.minecraft.launcher.events.RefreshedVersionsListener;
-import net.minecraft.launcher.updater.download.DownloadJob;
-import net.minecraft.launcher.updater.download.Downloadable;
-import net.minecraft.launcher.versions.CompleteVersion;
-import net.minecraft.launcher.versions.ReleaseType;
-import net.minecraft.launcher.versions.Version;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-import javax.swing.*;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.File;
-import java.io.IOException;
+import org.apache.logging.log4j.LogManager;
+import java.io.InputStream;
+import net.minecraft.launcher.updater.download.assets.AssetDownloadable;
+import net.minecraft.launcher.updater.download.assets.AssetIndex;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import java.util.HashSet;
+import java.util.Set;
 import java.net.Proxy;
+import net.minecraft.launcher.updater.download.EtagDownloadable;
+import java.io.File;
 import java.net.URL;
-import java.util.*;
+import net.minecraft.launcher.updater.download.Downloadable;
+import net.minecraft.launcher.updater.download.DownloadJob;
+import net.minecraft.launcher.OperatingSystem;
+import net.minecraft.launcher.versions.CompleteVersion;
+import java.util.Map;
+import java.util.Comparator;
+import net.minecraft.launcher.versions.Version;
+import java.util.EnumMap;
+import net.minecraft.launcher.versions.ReleaseType;
+import java.util.HashMap;
+import javax.swing.SwingUtilities;
+import java.util.Iterator;
+import java.util.Collection;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
+import com.google.gson.Gson;
+import net.minecraft.launcher.events.RefreshedVersionsListener;
+import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
+import org.apache.logging.log4j.Logger;
 
-public class VersionManager {
+public class VersionManager
+{
+    private static final Logger LOGGER;
     private final VersionList localVersionList;
     private final VersionList remoteVersionList;
-    private final ThreadPoolExecutor executorService = new ExceptionalThreadPoolExecutor(8);
-    private final List<RefreshedVersionsListener> refreshedVersionsListeners = Collections.synchronizedList(new ArrayList());
-    private final Object refreshLock = new Object();
+    private final ThreadPoolExecutor executorService;
+    private final List<RefreshedVersionsListener> refreshedVersionsListeners;
+    private final Object refreshLock;
     private boolean isRefreshing;
-
-    public VersionManager(VersionList localVersionList, VersionList remoteVersionList) {
+    private final Gson gson;
+    
+    public VersionManager(final VersionList localVersionList, final VersionList remoteVersionList) {
+        super();
+        this.executorService = new ExceptionalThreadPoolExecutor(4, 8, 30L, TimeUnit.SECONDS);
+        this.refreshedVersionsListeners = Collections.synchronizedList(new ArrayList<RefreshedVersionsListener>());
+        this.refreshLock = new Object();
+        this.gson = new Gson();
         this.localVersionList = localVersionList;
         this.remoteVersionList = remoteVersionList;
     }
-
+    
     public void refreshVersions() throws IOException {
         synchronized (this.refreshLock) {
             this.isRefreshing = true;
         }
         try {
-            Launcher.getInstance().println("Refreshing local version list...");
+            VersionManager.LOGGER.info("Refreshing local version list...");
             this.localVersionList.refreshVersions();
-            Launcher.getInstance().println("Refreshing remote version list...");
+            VersionManager.LOGGER.info("Refreshing remote version list...");
             this.remoteVersionList.refreshVersions();
-        } catch (IOException ex) {
+        }
+        catch (IOException ex) {
             synchronized (this.refreshLock) {
                 this.isRefreshing = false;
             }
             throw ex;
         }
-
-        Launcher.getInstance().println("Refresh complete.");
-
+        VersionManager.LOGGER.info("Refresh complete.");
         synchronized (this.refreshLock) {
             this.isRefreshing = false;
         }
-
-        final List listeners = new ArrayList(this.refreshedVersionsListeners);
-        for (Iterator iterator = listeners.iterator(); iterator.hasNext(); ) {
-            RefreshedVersionsListener listener = (RefreshedVersionsListener) iterator.next();
-
+        final List<RefreshedVersionsListener> listeners = new ArrayList<RefreshedVersionsListener>(this.refreshedVersionsListeners);
+        final Iterator<RefreshedVersionsListener> iterator = listeners.iterator();
+        while (iterator.hasNext()) {
+            final RefreshedVersionsListener listener = iterator.next();
             if (!listener.shouldReceiveEventsInUIThread()) {
                 listener.onVersionsRefreshed(this);
                 iterator.remove();
             }
         }
-
-        if (!listeners.isEmpty())
+        if (!listeners.isEmpty()) {
             SwingUtilities.invokeLater(new Runnable() {
+                @Override
                 public void run() {
-                    for (RefreshedVersionsListener listener : (List<RefreshedVersionsListener>) listeners)
+                    for (final RefreshedVersionsListener listener : listeners) {
                         listener.onVersionsRefreshed(VersionManager.this);
+                    }
                 }
             });
+        }
     }
-
+    
     public List<VersionSyncInfo> getVersions() {
-        return getVersions(null);
+        return this.getVersions(null);
     }
-
-    public List<VersionSyncInfo> getVersions(VersionFilter filter) {
+    
+    public List<VersionSyncInfo> getVersions(final VersionFilter filter) {
         synchronized (this.refreshLock) {
-            if (this.isRefreshing) return new ArrayList();
+            if (this.isRefreshing) {
+                return new ArrayList<VersionSyncInfo>();
+            }
         }
-
-        List result = new ArrayList();
-        Object lookup = new HashMap();
-        Map counts = new EnumMap(ReleaseType.class);
-
-        for (ReleaseType type : ReleaseType.values()) {
-            counts.put(type, Integer.valueOf(0));
+        final List<VersionSyncInfo> result = new ArrayList<VersionSyncInfo>();
+        final Map<String, VersionSyncInfo> lookup = new HashMap<String, VersionSyncInfo>();
+        final Map<ReleaseType, Integer> counts = new EnumMap<ReleaseType, Integer>(ReleaseType.class);
+        for (final ReleaseType type : ReleaseType.values()) {
+            counts.put(type, 0);
         }
-
-        for (Version version : this.localVersionList.getVersions()) {
-            if ((version.getType() != null) && (version.getUpdatedTime() != null) && (
-                    (filter == null) || ((filter.getTypes().contains(version.getType())) && (((Integer) counts.get(version.getType())).intValue() < filter.getMaxCount())))) {
-                VersionSyncInfo syncInfo = getVersionSyncInfo(version, this.remoteVersionList.getVersion(version.getId()));
-                ((Map) lookup).put(version.getId(), syncInfo);
+        for (final Version version : this.localVersionList.getVersions()) {
+            if (version.getType() != null) {
+                if (version.getUpdatedTime() == null) {
+                    continue;
+                }
+                if (filter != null) {
+                    if (!filter.getTypes().contains(version.getType())) {
+                        continue;
+                    }
+                    if (counts.get(version.getType()) >= filter.getMaxCount()) {
+                        continue;
+                    }
+                }
+                final VersionSyncInfo syncInfo = this.getVersionSyncInfo(version, this.remoteVersionList.getVersion(version.getId()));
+                lookup.put(version.getId(), syncInfo);
                 result.add(syncInfo);
             }
         }
-        for (Version version : this.remoteVersionList.getVersions()) {
-            if ((version.getType() != null) && (version.getUpdatedTime() != null) &&
-                    (!((Map) lookup).containsKey(version.getId())) && (
-                    (filter == null) || ((filter.getTypes().contains(version.getType())) && (((Integer) counts.get(version.getType())).intValue() < filter.getMaxCount())))) {
-                VersionSyncInfo syncInfo = getVersionSyncInfo(this.localVersionList.getVersion(version.getId()), version);
-                ((Map) lookup).put(version.getId(), syncInfo);
+        for (final Version version : this.remoteVersionList.getVersions()) {
+            if (version.getType() != null) {
+                if (version.getUpdatedTime() == null) {
+                    continue;
+                }
+                if (lookup.containsKey(version.getId())) {
+                    continue;
+                }
+                if (filter != null) {
+                    if (!filter.getTypes().contains(version.getType())) {
+                        continue;
+                    }
+                    if (counts.get(version.getType()) >= filter.getMaxCount()) {
+                        continue;
+                    }
+                }
+                final VersionSyncInfo syncInfo = this.getVersionSyncInfo(this.localVersionList.getVersion(version.getId()), version);
+                lookup.put(version.getId(), syncInfo);
                 result.add(syncInfo);
-
-                if (filter != null)
-                    counts.put(version.getType(), Integer.valueOf(((Integer) counts.get(version.getType())).intValue() + 1));
+                if (filter == null) {
+                    continue;
+                }
+                counts.put(version.getType(), counts.get(version.getType()) + 1);
             }
         }
         if (result.isEmpty()) {
-            for (Version version : this.localVersionList.getVersions()) {
-                if ((version.getType() != null) && (version.getUpdatedTime() != null)) {
-                    VersionSyncInfo syncInfo = getVersionSyncInfo(version, this.remoteVersionList.getVersion(version.getId()));
-                    ((Map) lookup).put(version.getId(), syncInfo);
+            for (final Version version : this.localVersionList.getVersions()) {
+                if (version.getType() != null) {
+                    if (version.getUpdatedTime() == null) {
+                        continue;
+                    }
+                    final VersionSyncInfo syncInfo = this.getVersionSyncInfo(version, this.remoteVersionList.getVersion(version.getId()));
+                    lookup.put(version.getId(), syncInfo);
                     result.add(syncInfo);
+                    break;
                 }
             }
         }
-        Collections.sort(result, new Comparator() {
-            public int compare(Object a, Object b) {
-                Version aVer = ((VersionSyncInfo) a).getLatestVersion();
-                Version bVer = ((VersionSyncInfo) b).getLatestVersion();
-
-                if ((aVer.getReleaseTime() != null) && (bVer.getReleaseTime() != null)) {
+        Collections.sort(result, new Comparator<VersionSyncInfo>() {
+            @Override
+            public int compare(final VersionSyncInfo a, final VersionSyncInfo b) {
+                final Version aVer = a.getLatestVersion();
+                final Version bVer = b.getLatestVersion();
+                if (aVer.getReleaseTime() != null && bVer.getReleaseTime() != null) {
                     return bVer.getReleaseTime().compareTo(aVer.getReleaseTime());
                 }
                 return bVer.getUpdatedTime().compareTo(aVer.getUpdatedTime());
@@ -136,165 +182,146 @@ public class VersionManager {
         });
         return result;
     }
-
-    public VersionSyncInfo getVersionSyncInfo(Version version) {
-        return getVersionSyncInfo(version.getId());
+    
+    public VersionSyncInfo getVersionSyncInfo(final Version version) {
+        return this.getVersionSyncInfo(version.getId());
     }
-
-    public VersionSyncInfo getVersionSyncInfo(String name) {
-        return getVersionSyncInfo(this.localVersionList.getVersion(name), this.remoteVersionList.getVersion(name));
+    
+    public VersionSyncInfo getVersionSyncInfo(final String name) {
+        return this.getVersionSyncInfo(this.localVersionList.getVersion(name), this.remoteVersionList.getVersion(name));
     }
-
-    public VersionSyncInfo getVersionSyncInfo(Version localVersion, Version remoteVersion) {
-        boolean installed = localVersion != null;
-        boolean upToDate = installed;
-
-        if ((installed) && (remoteVersion != null)) {
+    
+    public VersionSyncInfo getVersionSyncInfo(final Version localVersion, final Version remoteVersion) {
+        boolean upToDate;
+        final boolean installed = upToDate = (localVersion != null);
+        if (installed && remoteVersion != null) {
             upToDate = !remoteVersion.getUpdatedTime().after(localVersion.getUpdatedTime());
         }
-        if ((localVersion instanceof CompleteVersion)) {
-            upToDate &= this.localVersionList.hasAllFiles((CompleteVersion) localVersion, OperatingSystem.getCurrentPlatform());
+        if (localVersion instanceof CompleteVersion) {
+            upToDate &= this.localVersionList.hasAllFiles((CompleteVersion)localVersion, OperatingSystem.getCurrentPlatform());
         }
-
         return new VersionSyncInfo(localVersion, remoteVersion, installed, upToDate);
     }
-
+    
     public List<VersionSyncInfo> getInstalledVersions() {
-        List result = new ArrayList();
-
-        for (Version version : this.localVersionList.getVersions()) {
-            if ((version.getType() != null) && (version.getUpdatedTime() != null)) {
-                VersionSyncInfo syncInfo = getVersionSyncInfo(version, this.remoteVersionList.getVersion(version.getId()));
+        final List<VersionSyncInfo> result = new ArrayList<VersionSyncInfo>();
+        for (final Version version : this.localVersionList.getVersions()) {
+            if (version.getType() != null) {
+                if (version.getUpdatedTime() == null) {
+                    continue;
+                }
+                final VersionSyncInfo syncInfo = this.getVersionSyncInfo(version, this.remoteVersionList.getVersion(version.getId()));
                 result.add(syncInfo);
             }
         }
         return result;
     }
-
+    
     public VersionList getRemoteVersionList() {
         return this.remoteVersionList;
     }
-
+    
     public VersionList getLocalVersionList() {
         return this.localVersionList;
     }
-
-    public CompleteVersion getLatestCompleteVersion(VersionSyncInfo syncInfo) throws IOException {
-        if (syncInfo.getLatestSource() == VersionSyncInfo.VersionSource.REMOTE) {
-            CompleteVersion result = null;
-            IOException exception = null;
-            try {
-                result = this.remoteVersionList.getCompleteVersion(syncInfo.getLatestVersion());
-            } catch (IOException e) {
-                exception = e;
-                try {
-                    result = this.localVersionList.getCompleteVersion(syncInfo.getLatestVersion());
-                } catch (IOException localIOException1) {
-                }
-            }
-            if (result != null) {
-                return result;
-            }
-            throw exception;
+    
+    public CompleteVersion getLatestCompleteVersion(final VersionSyncInfo syncInfo) throws IOException {
+        if (syncInfo.getLatestSource() != VersionSyncInfo.VersionSource.REMOTE) {
+            return this.localVersionList.getCompleteVersion(syncInfo.getLatestVersion());
         }
-
-        return this.localVersionList.getCompleteVersion(syncInfo.getLatestVersion());
-    }
-
-    public DownloadJob downloadVersion(VersionSyncInfo syncInfo, DownloadJob job) throws IOException {
-        if (!(this.localVersionList instanceof LocalVersionList))
-            throw new IllegalArgumentException("Cannot download if local repo isn't a LocalVersionList");
-        if (!(this.remoteVersionList instanceof RemoteVersionList))
-            throw new IllegalArgumentException("Cannot download if local repo isn't a RemoteVersionList");
-        CompleteVersion version = getLatestCompleteVersion(syncInfo);
-        File baseDirectory = ((LocalVersionList) this.localVersionList).getBaseDirectory();
-        Proxy proxy = ((RemoteVersionList) this.remoteVersionList).getProxy();
-
-     /*   if ((!syncInfo.isInstalled()) || (!syncInfo.isUpToDate())) {
-            job.addDownloadables(version.getRequiredDownloadables(OperatingSystem.getCurrentPlatform(), proxy, baseDirectory, false));
-        }*/
-
-        job.addDownloadables(version.getRequiredDownloadables(OperatingSystem.getCurrentPlatform(), proxy, baseDirectory, false));
-
-
-        String jarFile = "versions/" + version.getId() + "/" + version.getId() + ".jar";
-        job.addDownloadables(new Downloadable[]{new Downloadable(proxy, new URL("https://s3.amazonaws.com/Minecraft.Download/" + jarFile), new File(baseDirectory, jarFile), false)});
-
-        return job;
-    }
-
-    public DownloadJob downloadResources(DownloadJob job) throws IOException {
-        File baseDirectory = ((LocalVersionList) this.localVersionList).getBaseDirectory();
-
-        job.addDownloadables(getResourceFiles(((RemoteVersionList) this.remoteVersionList).getProxy(), baseDirectory));
-
-        return job;
-    }
-
-    private Set<Downloadable> getResourceFiles(Proxy proxy, File baseDirectory) {
-        Set result = new HashSet();
+        CompleteVersion result = null;
+        IOException exception = null;
         try {
-            String nextMarker = null;
-            long start = System.nanoTime();
-            do {
-                String query = nextMarker != null ? "?marker=" + nextMarker : "";
-                URL resourceUrl = new URL("https://s3.amazonaws.com/Minecraft.Resources/" + query);
-                System.out.println("resourceUrl = " + resourceUrl);
-                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-                DocumentBuilder db = dbf.newDocumentBuilder();
-                Document doc = db.parse(resourceUrl.openConnection(proxy).getInputStream());
-                NodeList nodeLst = doc.getElementsByTagName("Contents");
-
-                for (int i = 0; i < nodeLst.getLength(); i++) {
-                    Node node = nodeLst.item(i);
-
-                    if (node.getNodeType() == 1) {
-                        Element element = (Element) node;
-                        String key = element.getElementsByTagName("Key").item(0).getChildNodes().item(0).getNodeValue();
-                        String etag = element.getElementsByTagName("ETag") != null ? element.getElementsByTagName("ETag").item(0).getChildNodes().item(0).getNodeValue() : "-";
-                        long size = Long.parseLong(element.getElementsByTagName("Size").item(0).getChildNodes().item(0).getNodeValue());
-
-                        if (size > 0L) {
-                            File file = new File(baseDirectory, "assets/" + key);
-                            if (etag.length() > 1) {
-                                etag = Downloadable.getEtag(etag);
-                                if ((file.isFile()) && (file.length() == size)) {
-                                    String localMd5 = Downloadable.getMD5(file);
-                                    if (localMd5.equals(etag)) continue;
-                                }
-                            }
-                            //result.add(new Downloadable(proxy, new URL("https://s3.amazonaws.com/Minecraft.Resources/" + key), file, false));
-                            Downloadable downloadable = new Downloadable(proxy, new URL("https://s3.amazonaws.com/Minecraft.Resources/" + key), file, false);
-                            downloadable.setExpectedSize(size);
-                            result.add(downloadable);
-                        } else {
-                            nextMarker = key;
-                        }
-                    }
-                }
-                if ("false".equals(doc.getElementsByTagName("IsTruncated").item(0).getTextContent()))
-                    nextMarker = null;
-            }
-            while (nextMarker != null);
-            long end = System.nanoTime();
-            long delta = end - start;
-            Launcher.getInstance().println("Delta time to compare resources: " + delta / 1000000L + " ms ");
-        } catch (Exception ex) {
-            Launcher.getInstance().println("Couldn't download resources", ex);
+            result = this.remoteVersionList.getCompleteVersion(syncInfo.getLatestVersion());
         }
-
+        catch (IOException e) {
+            exception = e;
+            try {
+                result = this.localVersionList.getCompleteVersion(syncInfo.getLatestVersion());
+            }
+            catch (IOException ex) {}
+        }
+        if (result != null) {
+            return result;
+        }
+        throw exception;
+    }
+    
+    public DownloadJob downloadVersion(final VersionSyncInfo syncInfo, final DownloadJob job) throws IOException {
+        if (!(this.localVersionList instanceof LocalVersionList)) {
+            throw new IllegalArgumentException("Cannot download if local repo isn't a LocalVersionList");
+        }
+        if (!(this.remoteVersionList instanceof RemoteVersionList)) {
+            throw new IllegalArgumentException("Cannot download if local repo isn't a RemoteVersionList");
+        }
+        final CompleteVersion version = this.getLatestCompleteVersion(syncInfo);
+        final File baseDirectory = ((LocalVersionList)this.localVersionList).getBaseDirectory();
+        final Proxy proxy = ((RemoteVersionList)this.remoteVersionList).getProxy();
+        job.addDownloadables(version.getRequiredDownloadables(OperatingSystem.getCurrentPlatform(), proxy, baseDirectory, false));
+        final String jarFile = "versions/" + version.getId() + "/" + version.getId() + ".jar";
+        job.addDownloadables(new EtagDownloadable(proxy, new URL("https://s3.amazonaws.com/Minecraft.Download/" + jarFile), new File(baseDirectory, jarFile), false));
+        return job;
+    }
+    
+    public DownloadJob downloadResources(final DownloadJob job, final CompleteVersion version) throws IOException {
+        final File baseDirectory = ((LocalVersionList)this.localVersionList).getBaseDirectory();
+        job.addDownloadables(this.getResourceFiles(((RemoteVersionList)this.remoteVersionList).getProxy(), baseDirectory, version));
+        return job;
+    }
+    
+    private Set<Downloadable> getResourceFiles(final Proxy proxy, final File baseDirectory, final CompleteVersion version) {
+        final Set<Downloadable> result = new HashSet<Downloadable>();
+        InputStream inputStream = null;
+        final File assets = new File(baseDirectory, "assets");
+        final File objectsFolder = new File(assets, "objects");
+        final File indexesFolder = new File(assets, "indexes");
+        String indexName = version.getAssets();
+        final long start = System.nanoTime();
+        if (indexName == null) {
+            indexName = "legacy";
+        }
+        final File indexFile = new File(indexesFolder, indexName + ".json");
+        try {
+            final URL indexUrl = new URL("https://s3.amazonaws.com/Minecraft.Download/indexes/" + indexName + ".json");
+            inputStream = indexUrl.openConnection(proxy).getInputStream();
+            final String json = IOUtils.toString(inputStream);
+            FileUtils.writeStringToFile(indexFile, json);
+            final AssetIndex index = this.gson.fromJson(json, AssetIndex.class);
+            for (final AssetIndex.AssetObject object : index.getUniqueObjects()) {
+                final String filename = object.getHash().substring(0, 2) + "/" + object.getHash();
+                final File file = new File(objectsFolder, filename);
+                if (!file.isFile() || FileUtils.sizeOf(file) != object.getSize()) {
+                    final Downloadable downloadable = new AssetDownloadable(proxy, new URL("http://resources.download.minecraft.net/" + filename), file, false, object.getHash(), object.getSize());
+                    downloadable.setExpectedSize(object.getSize());
+                    result.add(downloadable);
+                }
+            }
+            final long end = System.nanoTime();
+            final long delta = end - start;
+            VersionManager.LOGGER.debug("Delta time to compare resources: " + delta / 1000000L + " ms ");
+        }
+        catch (Exception ex) {
+            VersionManager.LOGGER.error("Couldn't download resources", ex);
+        }
+        finally {
+            IOUtils.closeQuietly(inputStream);
+        }
         return result;
     }
-
+    
     public ThreadPoolExecutor getExecutorService() {
         return this.executorService;
     }
-
-    public void addRefreshedVersionsListener(RefreshedVersionsListener listener) {
+    
+    public void addRefreshedVersionsListener(final RefreshedVersionsListener listener) {
         this.refreshedVersionsListeners.add(listener);
     }
-
-    public void removeRefreshedVersionsListener(RefreshedVersionsListener listener) {
+    
+    public void removeRefreshedVersionsListener(final RefreshedVersionsListener listener) {
         this.refreshedVersionsListeners.remove(listener);
+    }
+    
+    static {
+        LOGGER = LogManager.getLogger();
     }
 }

@@ -1,40 +1,44 @@
-
 package net.minecraft.launcher;
 
-import net.minecraft.launcher.authentication.AuthenticationService;
-import net.minecraft.launcher.authentication.OldAuthentication;
-import net.minecraft.launcher.authentication.SPAuthenticationService;
-import net.minecraft.launcher.authentication.exceptions.AuthenticationException;
-import net.minecraft.launcher.authentication.exceptions.InvalidCredentialsException;
-import net.minecraft.launcher.authentication.yggdrasil.YggdrasilAuthenticationService;
-import net.minecraft.launcher.locale.LocaleHelper;
+import com.mojang.authlib.Agent;
+import com.mojang.authlib.UserAuthentication;
+import com.mojang.authlib.exceptions.AuthenticationException;
+import com.mojang.authlib.exceptions.InvalidCredentialsException;
 import net.minecraft.launcher.profile.Profile;
 import net.minecraft.launcher.profile.ProfileManager;
 import net.minecraft.launcher.ui.LauncherPanel;
 import net.minecraft.launcher.ui.popups.login.LogInPopup;
+import net.minecraft.launcher.updater.ExceptionalThreadPoolExecutor;
 import net.minecraft.launcher.updater.LocalVersionList;
 import net.minecraft.launcher.updater.RemoteVersionList;
 import net.minecraft.launcher.updater.VersionManager;
-import net.minecraft.launcher.updater.download.DownloadJob;
-import org.hopto.energy.InstallDirSettings;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
-import java.util.*;
-import java.util.List;
+import java.util.Date;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
-public class Launcher {
+public class Launcher
+{
+    private static final Logger LOGGER;
     private static Launcher instance;
-    private static final List<String> delayedSysout = new ArrayList();
     private final VersionManager versionManager;
     private final JFrame frame;
     private final LauncherPanel launcherPanel;
@@ -45,295 +49,200 @@ public class Launcher {
     private final String[] additionalArgs;
     private final Integer bootstrapVersion;
     private final ProfileManager profileManager;
-    private final OldAuthentication authentication;
-    private UUID clientToken = UUID.randomUUID();
-    private Locale locale;
-    private static boolean SPMode = true;
-
-    public Launcher(JFrame frame, File workingDirectory, Proxy proxy, PasswordAuthentication proxyAuth, String[] args) {
-        this(frame, workingDirectory, proxy, proxyAuth, args, Integer.valueOf(0));
+    private final ThreadPoolExecutor downloaderExecutorService;
+    private UUID clientToken;
+    private static boolean onlineMode=false;
+    
+    public Launcher(final JFrame frame, final File workingDirectory, final Proxy proxy, final PasswordAuthentication proxyAuth, final String[] args) {
+        this(frame, workingDirectory, proxy, proxyAuth, args, 0);
     }
-
-    public Launcher(JFrame frame, File workingDirectory, Proxy proxy, PasswordAuthentication proxyAuth, String[] args, Integer bootstrapVersion) {
-        // this.locale=new Locale("en","US");
-        //LocaleHelper.setCurrentLocale(this.locale);
-
+    
+    public Launcher(final JFrame frame, final File workingDirectory, final Proxy proxy, final PasswordAuthentication proxyAuth, final String[] args, final Integer bootstrapVersion) {
+        super();
+        this.downloaderExecutorService = new ExceptionalThreadPoolExecutor(16, 16, 30L, TimeUnit.SECONDS);
+        this.clientToken = UUID.randomUUID();
         this.bootstrapVersion = bootstrapVersion;
-        instance = this;
+        Launcher.instance = this;
         setLookAndFeel();
-
         this.proxy = proxy;
         this.proxyAuth = proxyAuth;
         this.additionalArgs = args;
-        this.workingDirectory = InstallDirSettings.loadAtStartup(frame, workingDirectory);
+        this.workingDirectory = workingDirectory;
         this.frame = frame;
         this.gameLauncher = new GameLauncher(this);
         this.profileManager = new ProfileManager(this);
-        this.versionManager = new VersionManager(new LocalVersionList(this.workingDirectory), new RemoteVersionList(proxy));
+        this.versionManager = new VersionManager(new LocalVersionList(workingDirectory), new RemoteVersionList(proxy));
         this.launcherPanel = new LauncherPanel(this);
-        this.authentication = new OldAuthentication(this, proxy);
-        //  this.locale=this.profileManager.getSelectedProfile().getLocale();
-        this.frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-
-
-        initializeFrame();
-
-        for (String line : delayedSysout) {
-            this.launcherPanel.getTabPanel().getConsole().print(line + "\n");
+        this.downloaderExecutorService.allowCoreThreadTimeOut(true);
+        this.initializeFrame();
+        if (bootstrapVersion < 4) {
+            this.showOutdatedNotice();
+            return;
         }
-
-        downloadResources();
-        //refreshProfiles();
-        //refreshVersions();
-        refreshVersionsAndProfiles();
-
-        println("Launcher " + LauncherConstants.VERSION_NAME + " (through bootstrap " + bootstrapVersion + ") started on " + OperatingSystem.getCurrentPlatform().getName() + "...");
-        println("Current time is " + DateFormat.getDateTimeInstance(2, 2, Locale.US).format(new Date()));
-        println("Current Locale is " + LocaleHelper.getCurrentLocale());
+        this.refreshVersionsAndProfiles();
+        Launcher.LOGGER.info(this.getFrame().getTitle() + " (through bootstrap " + bootstrapVersion + ") started on " + OperatingSystem.getCurrentPlatform().getName() + "...");
+        Launcher.LOGGER.info("Current time is " + DateFormat.getDateTimeInstance(2, 2, Locale.US).format(new Date()));
         if (!OperatingSystem.getCurrentPlatform().isSupported()) {
-            println("This operating system is unknown or unsupported, we cannot guarantee that the game will launch.");
+            Launcher.LOGGER.fatal("This operating system is unknown or unsupported, we cannot guarantee that the game will launch successfully.");
         }
-        println("System.getProperty('os.name') == '" + System.getProperty("os.name") + "'");
-        println("System.getProperty('os.version') == '" + System.getProperty("os.version") + "'");
-        println("System.getProperty('os.arch') == '" + System.getProperty("os.arch") + "'");
-        println("System.getProperty('java.version') == '" + System.getProperty("java.version") + "'");
-        println("System.getProperty('java.vendor') == '" + System.getProperty("java.vendor") + "'");
+        Launcher.LOGGER.info("System.getProperty('os.name') == '" + System.getProperty("os.name") + "'");
+        Launcher.LOGGER.info("System.getProperty('os.version') == '" + System.getProperty("os.version") + "'");
+        Launcher.LOGGER.info("System.getProperty('os.arch') == '" + System.getProperty("os.arch") + "'");
+        Launcher.LOGGER.info("System.getProperty('java.version') == '" + System.getProperty("java.version") + "'");
+        Launcher.LOGGER.info("System.getProperty('java.vendor') == '" + System.getProperty("java.vendor") + "'");
+        Launcher.LOGGER.info("System.getProperty('sun.arch.data.model') == '" + System.getProperty("sun.arch.data.model") + "'");
     }
-
-    public static void setLookAndFeel() {
-        JFrame frame = new JFrame();
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Throwable ignored) {
+    
+    private void showOutdatedNotice() {
+        final String error = "Sorry, but your launcher is outdated! Please redownload it at https://mojang.com/2013/06/minecraft-1-6-pre-release/";
+        this.frame.getContentPane().removeAll();
+        final int result = JOptionPane.showOptionDialog(this.frame, error, "Outdated launcher", 0, 0, null, LauncherConstants.BOOTSTRAP_OUT_OF_DATE_BUTTONS, LauncherConstants.BOOTSTRAP_OUT_OF_DATE_BUTTONS[0]);
+        if (result == 0) {
             try {
-                getInstance().println("Your java failed to provide normal look and feel, trying the old fallback now");
-                UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-            } catch (Throwable t) {
-                getInstance().println("Unexpected exception setting look and feel");
-                t.printStackTrace();
+                OperatingSystem.openLink(new URI("https://mojang.com/2013/06/minecraft-1-6-pre-release/"));
+            }
+            catch (URISyntaxException e) {
+                Launcher.LOGGER.error("Couldn't open bootstrap download link. Please visit https://mojang.com/2013/06/minecraft-1-6-pre-release/ manually.", e);
             }
         }
-        JPanel panel = new JPanel();
+        this.closeLauncher();
+    }
+    
+    public static void setLookAndFeel() {
+        final JFrame frame = new JFrame();
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        }
+        catch (Throwable ignored) {
+            try {
+                Launcher.LOGGER.error("Your java failed to provide normal look and feel, trying the old fallback now");
+                UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+            }
+            catch (Throwable t) {
+                Launcher.LOGGER.error("Unexpected exception setting look and feel", t);
+            }
+        }
+        final JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createTitledBorder("test"));
         frame.add(panel);
         try {
             frame.pack();
-        } catch (Throwable t) {
-            getInstance().println("Custom (broken) theme detected, falling back onto x-platform theme");
+        }
+        catch (Throwable ignored2) {
+            Launcher.LOGGER.error("Custom (broken) theme detected, falling back onto x-platform theme");
             try {
                 UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-            } catch (Throwable ex) {
-                getInstance().println("Unexpected exception setting look and feel", ex);
+            }
+            catch (Throwable ex) {
+                Launcher.LOGGER.error("Unexpected exception setting look and feel", ex);
             }
         }
         frame.dispose();
     }
-
-    public static Launcher getInstance() {
-        return instance;
-    }
-
-    private void showOutdatedNotice() {
-        String error = "Sorry, but your launcher is outdated! Please redownload it at https://mojang.com/2013/06/minecraft-1-6-pre-release/";
-        this.frame.getContentPane().removeAll();
-        int result = JOptionPane.showOptionDialog(this.frame, error, "Outdated launcher", 0, 0, null, LauncherConstants.BOOTSTRAP_OUT_OF_DATE_BUTTONS, LauncherConstants.BOOTSTRAP_OUT_OF_DATE_BUTTONS[0]);
-        if (result == 0) {
-            try {
-                OperatingSystem.openLink(new URI("https://mojang.com/2013/06/minecraft-1-6-pre-release/"));
-            } catch (URISyntaxException e) {
-                println("Couldn't open bootstrap download link. Please visit https://mojang.com/2013/06/minecraft-1-6-pre-release/ manually.", e);
-            }
-        }
-        this.frame.dispatchEvent(new WindowEvent(this.frame, 201));
-    }
-
-    private void downloadResources() {
-        final DownloadJob job = new DownloadJob("Resources", true, this.gameLauncher);
-        this.gameLauncher.addJob(job);
-        this.versionManager.getExecutorService().submit(new Runnable() {
-            public void run() {
-                try {
-                    Launcher.this.versionManager.downloadResources(job);
-                    job.startDownloading(Launcher.this.versionManager.getExecutorService());
-                } catch (IOException e) {
-                    Launcher.getInstance().println("Unexpected exception queueing resource downloads", e);
-                }
-            }
-        });
-    }
-
+    
     public void refreshVersionsAndProfiles() {
         this.versionManager.getExecutorService().submit(new Runnable() {
+            @Override
             public void run() {
                 try {
                     Launcher.this.versionManager.refreshVersions();
-                } catch (Throwable e) {
-                    Launcher.getInstance().println("Unexpected exception refreshing version list", e);
+                }
+                catch (Throwable e) {
+                    Launcher.LOGGER.error("Unexpected exception refreshing version list", e);
                 }
                 try {
                     Launcher.this.profileManager.loadProfiles();
-                    Launcher.this.println("Loaded " + Launcher.this.profileManager.getProfiles().size() + " profile(s); selected '" + Launcher.this.profileManager.getSelectedProfile().getName() + "'");
-                } catch (Throwable e) {
-                    Launcher.getInstance().println("Unexpected exception refreshing profile list", e);
+                    Launcher.LOGGER.info("Loaded " + Launcher.this.profileManager.getProfiles().size() + " profile(s); selected '" + Launcher.this.profileManager.getSelectedProfile().getName() + "'");
                 }
-
+                catch (Throwable e) {
+                    Launcher.LOGGER.error("Unexpected exception refreshing profile list", e);
+                }
                 Launcher.this.ensureLoggedIn();
             }
         });
     }
-
-   /* public void refreshVersions() {
-        this.versionManager.getExecutorService().submit(new Runnable() {
-            public void run() {
-                try {
-                    Launcher.this.versionManager.refreshVersions();
-                } catch (Throwable e) {
-                    Launcher.getInstance().println("Unexpected exception refreshing version list", e);
-                }
-            }
-        });
-    }*/
-
-    /*public void refreshProfiles() {
-        this.versionManager.getExecutorService().submit(new Runnable() {
-            public void run() {
-                try {
-                    if (!Launcher.this.profileManager.loadProfiles()) {
-                        String[] storedDetails = LegacyAuthenticationService.getStoredDetails(new File(Launcher.this.getWorkingDirectory(), "lastlogin"));
-
-                        if (storedDetails != null) {
-                            Profile profile = Launcher.this.profileManager.getSelectedProfile();
-
-                            profile.getAuthentication().setUsername(storedDetails[0]);
-                            profile.getAuthentication().setPassword(storedDetails[1]);
-
-                            Launcher.this.profileManager.saveProfiles();
-                            Launcher.this.profileManager.fireRefreshEvent();
-
-                            Launcher.this.println("Initialized default profile with old lastlogin details");
-                        } else {
-                            Launcher.this.println("Created default profile with no authentication details");
-                        }
-                    } else {
-                        Launcher.this.println("Loaded " + Launcher.this.profileManager.getProfiles().size() + " profile(s); selected '" + Launcher.this.profileManager.getSelectedProfile().getName() + "'");
-                    }
-                } catch (Throwable e) {
-                    Launcher.getInstance().println("Unexpected exception refreshing profile list", e);
-                }
-            }
-        });
-    }*/
-
-    /*public void refreshProfiles() {
-        this.versionManager.getExecutorService().submit(new Runnable() {
-            public void run() {
-                try {
-                    if (!Launcher.this.profileManager.loadProfiles()) {
-                        OldAuthentication.StoredDetails storedDetails=   Launcher.this.authentication.getStoredDetails();
-                        
-                        if (storedDetails != null) {
-                            storedDetails = new OldAuthentication.StoredDetails(storedDetails.getUsername(), null, storedDetails.getDisplayName(), storedDetails.getUUID());
-                            Profile profile = Launcher.this.profileManager.getSelectedProfile();
-                            
-                           
-
-                            Launcher.this.profileManager.saveProfiles();
-                            Launcher.this.profileManager.fireRefreshEvent();
-                            Launcher.this.println("Initialized default profile with old lastlogin details");
-                        } else {
-                            Launcher.this.println("Created default profile with no authentication details");
-                        }
-                    } else {
-                        Launcher.this.println("Loaded " + Launcher.this.profileManager.getProfiles().size() + " profile(s); selected '" + Launcher.this.profileManager.getSelectedProfile().getName() + "'");
-                    }
-                } catch (Throwable e) {
-                    Launcher.getInstance().println("Unexpected exception refreshing profile list", e);
-                }
-            }
-        });
-    }*/
-
+    
     public void ensureLoggedIn() {
-        Profile selectedProfile = this.profileManager.getSelectedProfile();
-        AuthenticationService auth = this.profileManager.getAuthDatabase().getByUUID(selectedProfile.getPlayerUUID());
-
-        if (auth == null)
-            showLoginPrompt();
+        final Profile selectedProfile = this.profileManager.getSelectedProfile();
+        final UserAuthentication auth = this.profileManager.getAuthDatabase().getByUUID(selectedProfile.getPlayerUUID());
+        if (auth == null) {
+            this.showLoginPrompt();
+        }
         else if (!auth.isLoggedIn()) {
-            if (auth.canLogIn())
+            if (auth.canLogIn()) {
                 try {
                     auth.logIn();
                     try {
                         this.profileManager.saveProfiles();
-                    } catch (IOException e) {
-                        println("Couldn't save profiles after refreshing auth!", e);
+                    }
+                    catch (IOException e) {
+                        Launcher.LOGGER.error("Couldn't save profiles after refreshing auth!", e);
                     }
                     this.profileManager.fireRefreshEvent();
-                } catch (AuthenticationException e) {
-                    println(e);
-                    showLoginPrompt();
                 }
-            else
-                showLoginPrompt();
-        } else if (!auth.canPlayOnline())
+                catch (AuthenticationException e2) {
+                    Launcher.LOGGER.error("Exception whilst logging into profile", e2);
+                    this.showLoginPrompt();
+                }
+            }
+            else {
+                this.showLoginPrompt();
+            }
+        }
+        else if (!auth.canPlayOnline()) {
             try {
-                println("Refreshing auth...");
+                Launcher.LOGGER.info("Refreshing auth...");
                 auth.logIn();
                 try {
                     this.profileManager.saveProfiles();
-                } catch (IOException e) {
-                    println("Couldn't save profiles after refreshing auth!", e);
+                }
+                catch (IOException e) {
+                    Launcher.LOGGER.error("Couldn't save profiles after refreshing auth!", e);
                 }
                 this.profileManager.fireRefreshEvent();
-            } catch (InvalidCredentialsException e) {
-                println(e);
-                showLoginPrompt();
-            } catch (AuthenticationException e) {
-                println(e);
             }
+            catch (InvalidCredentialsException e3) {
+                Launcher.LOGGER.error("Exception whilst logging into profile", e3);
+                this.showLoginPrompt();
+            }
+            catch (AuthenticationException e2) {
+                Launcher.LOGGER.error("Exception whilst logging into profile", e2);
+            }
+        }
     }
-
+    
     public void showLoginPrompt() {
         try {
             this.profileManager.saveProfiles();
-        } catch (IOException e) {
-            println("Couldn't save profiles before logging in!", e);
         }
-
-        for (Profile profile : this.profileManager.getProfiles().values()) {
-            Map credentials = profile.getAuthentication();
-
+        catch (IOException e) {
+            Launcher.LOGGER.error("Couldn't save profiles before logging in!", e);
+        }
+        for (final Profile profile : this.profileManager.getProfiles().values()) {
+            final Map<String, String> credentials = profile.getAuthentication();
             if (credentials != null) {
-                AuthenticationService auth = SPMode ? new SPAuthenticationService() : new YggdrasilAuthenticationService();
+                final UserAuthentication auth = this.profileManager.getAuthDatabase().getAuthenticationService().createUserAuthentication(Agent.MINECRAFT);
                 auth.loadFromStorage(credentials);
-
                 if (auth.isLoggedIn()) {
-                    String uuid = auth.getSelectedProfile() == null ? "demo-" + auth.getUsername() : auth.getSelectedProfile().getId();
+                    final String uuid = (auth.getSelectedProfile() == null) ? ("demo-" + auth.getUserID()) : auth.getSelectedProfile().getId();
                     if (this.profileManager.getAuthDatabase().getByUUID(uuid) == null) {
                         this.profileManager.getAuthDatabase().register(uuid, auth);
                     }
                 }
-
                 profile.setAuthentication(null);
             }
         }
-
         final Profile selectedProfile = this.profileManager.getSelectedProfile();
         LogInPopup.showLoginPrompt(this, new LogInPopup.Callback() {
-            public void onLogIn(String uuid) {
-                AuthenticationService auth = Launcher.this.profileManager.getAuthDatabase().getByUUID(uuid);
+            @Override
+            public void onLogIn(final String uuid) {
+                final UserAuthentication auth = Launcher.this.profileManager.getAuthDatabase().getByUUID(uuid);
                 selectedProfile.setPlayerUUID(uuid);
-
-                if ((selectedProfile.getName().equals("(Default)")) && (auth.getSelectedProfile() != null)) {
-                    String playerName = auth.getSelectedProfile().getName();
+                if (selectedProfile.getName().equals("(Default)") && auth.getSelectedProfile() != null) {
+                    final String playerName = auth.getSelectedProfile().getName();
                     String profileName = auth.getSelectedProfile().getName();
-                    int count = 1;
-
-                    while (Launcher.this.profileManager.getProfiles().containsKey(profileName)) {
-                        profileName = playerName + " " + ++count;
-                    }
-
-                    Profile newProfile = new Profile(selectedProfile);
+                    for (int count = 1; Launcher.this.profileManager.getProfiles().containsKey(profileName); profileName = playerName + " " + ++count) {}
+                    final Profile newProfile = new Profile(selectedProfile);
                     newProfile.setName(profileName);
                     Launcher.this.profileManager.getProfiles().put(profileName, newProfile);
                     Launcher.this.profileManager.getProfiles().remove("(Default)");
@@ -341,153 +250,116 @@ public class Launcher {
                 }
                 try {
                     Launcher.this.profileManager.saveProfiles();
-                } catch (IOException e) {
-                    Launcher.this.println("Couldn't save profiles after logging in!", e);
                 }
-
-                if (uuid == null)
+                catch (IOException e) {
+                    Launcher.LOGGER.error("Couldn't save profiles after logging in!", e);
+                }
+                if (uuid == null) {
                     Launcher.this.closeLauncher();
+                }
                 else {
                     Launcher.this.profileManager.fireRefreshEvent();
                 }
-
                 Launcher.this.launcherPanel.setCard("launcher", null);
             }
         });
     }
-
+    
     public void closeLauncher() {
         this.frame.dispatchEvent(new WindowEvent(this.frame, 201));
     }
-
+    
     protected void initializeFrame() {
         this.frame.getContentPane().removeAll();
-        this.frame.setTitle("Minecraft Freedom Launcher " + LauncherConstants.VERSION_NAME + " [by Energy]");
-        this.frame.setPreferredSize(new Dimension(950, 525));
+        this.frame.setTitle("Minecraft Launcher 1.3.7");
+        this.frame.setPreferredSize(new Dimension(900, 580));
         this.frame.setDefaultCloseOperation(2);
-
         this.frame.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
+            @Override
+            public void windowClosing(final WindowEvent e) {
                 Launcher.this.frame.setVisible(false);
                 Launcher.this.frame.dispose();
                 Launcher.this.versionManager.getExecutorService().shutdown();
             }
         });
         try {
-            InputStream in = Launcher.class.getResourceAsStream("/favicon.png");
-            if (in != null)
+            final InputStream in = Launcher.class.getResourceAsStream("/favicon.png");
+            if (in != null) {
                 this.frame.setIconImage(ImageIO.read(in));
-        } catch (IOException localIOException) {
+            }
         }
+        catch (IOException ex) {}
         this.frame.add(this.launcherPanel);
-
         this.frame.pack();
         this.frame.setVisible(true);
     }
-
-    public Locale getLocale() {
-        return locale;
-    }
-
-    public void setLocale(Locale locale) {
-        this.locale = locale;
-    }
-
+    
     public VersionManager getVersionManager() {
         return this.versionManager;
     }
-
+    
     public JFrame getFrame() {
         return this.frame;
     }
-
+    
     public LauncherPanel getLauncherPanel() {
         return this.launcherPanel;
     }
-
+    
     public GameLauncher getGameLauncher() {
         return this.gameLauncher;
     }
-
+    
     public File getWorkingDirectory() {
         return this.workingDirectory;
     }
-
+    
     public Proxy getProxy() {
         return this.proxy;
     }
-
+    
     public PasswordAuthentication getProxyAuth() {
         return this.proxyAuth;
     }
-
+    
     public String[] getAdditionalArgs() {
         return this.additionalArgs;
     }
-
-    public void println(String line) {
-        System.out.println(line);
-
-        if (this.launcherPanel == null)
-            delayedSysout.add(line);
-        else
-            this.launcherPanel.getTabPanel().getConsole().print(line + "\n");
-    }
-
-    public void println(String line, Throwable throwable) {
-        println(line);
-        println(throwable);
-    }
-
-    public void println(Throwable throwable) {
-        StringWriter writer = null;
-        PrintWriter printWriter = null;
-        String result = throwable.toString();
-        try {
-            writer = new StringWriter();
-            printWriter = new PrintWriter(writer);
-            throwable.printStackTrace(printWriter);
-            result = writer.toString();
-        } finally {
-            try {
-                if (writer != null) writer.close();
-                if (printWriter != null) printWriter.close();
-            } catch (IOException localIOException1) {
-            }
-        }
-        println(result);
-    }
-
+    
     public int getBootstrapVersion() {
-        return this.bootstrapVersion.intValue();
+        return this.bootstrapVersion;
     }
-
+    
+    public static Launcher getInstance() {
+        return Launcher.instance;
+    }
+    
     public ProfileManager getProfileManager() {
         return this.profileManager;
     }
-
+    
     public UUID getClientToken() {
         return this.clientToken;
     }
-
-    public void setClientToken(UUID clientToken) {
+    
+    public void setClientToken(final UUID clientToken) {
         this.clientToken = clientToken;
     }
-
-    public OldAuthentication getAuthentication() {
-        return this.authentication;
+    
+    public ThreadPoolExecutor getDownloaderExecutorService() {
+        return this.downloaderExecutorService;
     }
 
-    public static boolean isSPMode() {
-        return SPMode;
+    public static boolean isOnlineMode() {
+        return Launcher.onlineMode;
     }
 
-    public static void setSPMode(boolean SPMode) {
-        Launcher.SPMode = SPMode;
+    public static void setOnlineMode(boolean onlineMode) {
+        Launcher.onlineMode = onlineMode;
     }
 
-    public static void setInstance(Launcher instance) {
-        Launcher.instance = instance;
+    static {
+        Thread.currentThread().setContextClassLoader(Launcher.class.getClassLoader());
+        LOGGER = LogManager.getLogger();
     }
 }
-

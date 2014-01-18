@@ -1,88 +1,102 @@
 package net.minecraft.launcher.ui.popups.login;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import net.minecraft.launcher.Http;
-import net.minecraft.launcher.updater.LowerCaseEnumTypeAdapterFactory;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.net.URL;
 import java.util.Map;
+import com.google.gson.reflect.TypeToken;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
+import com.google.gson.TypeAdapterFactory;
+import net.minecraft.launcher.updater.LowerCaseEnumTypeAdapterFactory;
+import com.google.gson.GsonBuilder;
+import com.google.gson.Gson;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
-public class AuthErrorForm extends JPanel {
+public class AuthErrorForm extends JPanel
+{
     private final LogInPopup popup;
-    private final JLabel errorLabel = new JLabel();
-    private final Gson gson = new GsonBuilder().registerTypeAdapterFactory(new LowerCaseEnumTypeAdapterFactory()).create();
-
-    public AuthErrorForm(LogInPopup popup) {
+    private final JLabel errorLabel;
+    private final Gson gson;
+    
+    public AuthErrorForm(final LogInPopup popup) {
+        super();
+        this.errorLabel = new JLabel();
+        this.gson = new GsonBuilder().registerTypeAdapterFactory(new LowerCaseEnumTypeAdapterFactory()).create();
         this.popup = popup;
-
-        createInterface();
-        clear();
+        this.createInterface();
+        this.clear();
     }
-
+    
     protected void createInterface() {
-        setBorder(new EmptyBorder(0, 0, 15, 0));
+        this.setBorder(new EmptyBorder(0, 0, 15, 0));
         this.errorLabel.setFont(this.errorLabel.getFont().deriveFont(1));
-        add(this.errorLabel);
+        this.add(this.errorLabel);
     }
-
+    
     public void clear() {
-        setVisible(false);
+        this.setVisible(false);
     }
-
-    public void setVisible(boolean value) {
+    
+    @Override
+    public void setVisible(final boolean value) {
         super.setVisible(value);
         this.popup.repack();
     }
-
-    public void displayError(final Throwable throwable, final String[] lines) {
+    
+    public void displayError(final Throwable throwable, final String... lines) {
         if (SwingUtilities.isEventDispatchThread()) {
             String error = "";
-            for (String line : lines) {
+            for (final String line : lines) {
                 error = error + "<p>" + line + "</p>";
             }
-            if (throwable != null)
+            if (throwable != null) {
                 error = error + "<p style='font-size: 0.9em; font-style: italic;'>(" + ExceptionUtils.getRootCauseMessage(throwable) + ")</p>";
+            }
             this.errorLabel.setText("<html><div style='text-align: center;'>" + error + " </div></html>");
-            if (!isVisible()) refreshStatuses();
-            setVisible(true);
-        } else {
+            if (!this.isVisible()) {
+                this.refreshStatuses();
+            }
+            this.setVisible(true);
+        }
+        else {
             SwingUtilities.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                     AuthErrorForm.this.displayError(throwable, lines);
                 }
             });
         }
     }
-
+    
     public void refreshStatuses() {
         this.popup.getLauncher().getVersionManager().getExecutorService().submit(new Runnable() {
+            @Override
             public void run() {
                 try {
-                    TypeToken token = new TypeToken() {
-                    };
-                    Map statuses = (Map) AuthErrorForm.this.gson.fromJson(Http.performGet(new URL("http://status.mojang.com/check?service=authserver.mojang.com"), AuthErrorForm.this.popup.getLauncher().getProxy()), token.getType());
-
-                    if (statuses.get("authserver.mojang.com") == AuthErrorForm.ServerStatus.RED)
-                        AuthErrorForm.this.displayError(null, new String[]{"It looks like our servers are down right now. Sorry!", "We're already working on the problem and will have it fixed soon.", "Please try again later!"});
-                } catch (Exception localException) {
+                    final TypeToken<Map<String, ServerStatus>> token = new TypeToken<Map<String, ServerStatus>>() {};
+                    final Map<String, ServerStatus> statuses = AuthErrorForm.this.gson.fromJson(Http.performGet(new URL("http://status.mojang.com/check?service=authserver.mojang.com"), AuthErrorForm.this.popup.getLauncher().getProxy()), token.getType());
+                    if (statuses.get("authserver.mojang.com") == ServerStatus.RED) {
+                        AuthErrorForm.this.displayError(null, "It looks like our servers are down right now. Sorry!", "We're already working on the problem and will have it fixed soon.", "Please try again later!");
+                    }
                 }
+                catch (Exception ex) {}
             }
         });
     }
-
-    public static enum ServerStatus {
-        GREEN("Online, no problems detected."),
-        YELLOW("May be experiencing issues."),
+    
+    public enum ServerStatus
+    {
+        GREEN("Online, no problems detected."), 
+        YELLOW("May be experiencing issues."), 
         RED("Offline, experiencing problems.");
-
+        
         private final String title;
-
-        private ServerStatus(String title) {
+        
+        private ServerStatus(final String title) {
             this.title = title;
         }
     }

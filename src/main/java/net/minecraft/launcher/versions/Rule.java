@@ -1,49 +1,95 @@
 package net.minecraft.launcher.versions;
 
-import net.minecraft.launcher.OperatingSystem;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.minecraft.launcher.OperatingSystem;
 
-public class Rule {
-    private Action action = Action.ALLOW;
+public class Rule
+{
+    private Action action;
     private OSRestriction os;
-
+    
+    public Rule() {
+        super();
+        this.action = Action.ALLOW;
+    }
+    
+    public Rule(final Rule rule) {
+        super();
+        this.action = Action.ALLOW;
+        this.action = rule.action;
+        if (rule.os != null) {
+            this.os = new OSRestriction(rule.os);
+        }
+    }
+    
     public Action getAppliedAction() {
-        if ((this.os != null) && (!this.os.isCurrentOperatingSystem())) return null;
-
+        if (this.os != null && !this.os.isCurrentOperatingSystem()) {
+            return null;
+        }
         return this.action;
     }
-
+    
+    public Action getAction() {
+        return this.action;
+    }
+    
+    public OSRestriction getOs() {
+        return this.os;
+    }
+    
+    @Override
     public String toString() {
         return "Rule{action=" + this.action + ", os=" + this.os + '}';
     }
-
-    public static enum Action {
-        ALLOW,
+    
+    public enum Action
+    {
+        ALLOW, 
         DISALLOW;
     }
-
-    public class OSRestriction {
+    
+    public class OSRestriction
+    {
         private OperatingSystem name;
         private String version;
-
+        
         public OSRestriction() {
+            super();
         }
-
+        
+        public OperatingSystem getName() {
+            return this.name;
+        }
+        
+        public String getVersion() {
+            return this.version;
+        }
+        
+        public OSRestriction(final OSRestriction osRestriction) {
+            super();
+            this.name = osRestriction.name;
+            this.version = osRestriction.version;
+        }
+        
         public boolean isCurrentOperatingSystem() {
-            if ((this.name != null) && (this.name != OperatingSystem.getCurrentPlatform())) return false;
-
-            if (this.version != null)
+            if (this.name != null && this.name != OperatingSystem.getCurrentPlatform()) {
+                return false;
+            }
+            if (this.version != null) {
                 try {
-                    Pattern pattern = Pattern.compile(this.version);
-                    Matcher matcher = pattern.matcher(System.getProperty("os.version"));
-                    if (!matcher.matches()) return false;
-                } catch (Throwable localThrowable) {
+                    final Pattern pattern = Pattern.compile(this.version);
+                    final Matcher matcher = pattern.matcher(System.getProperty("os.version"));
+                    if (!matcher.matches()) {
+                        return false;
+                    }
                 }
+                catch (Throwable t) {}
+            }
             return true;
         }
-
+        
+        @Override
         public String toString() {
             return "OSRestriction{name=" + this.name + ", version='" + this.version + '\'' + '}';
         }

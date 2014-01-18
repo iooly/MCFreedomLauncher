@@ -1,198 +1,213 @@
 package net.minecraft.launcher.ui.popups.profile;
 
-import net.minecraft.launcher.events.RefreshedVersionsListener;
-import net.minecraft.launcher.locale.LocaleHelper;
-import net.minecraft.launcher.profile.Profile;
-import net.minecraft.launcher.updater.VersionManager;
-import net.minecraft.launcher.updater.VersionSyncInfo;
-import net.minecraft.launcher.versions.ReleaseType;
-import net.minecraft.launcher.versions.Version;
-
-import javax.swing.*;
+import javax.swing.JList;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import net.minecraft.launcher.updater.VersionManager;
+import net.minecraft.launcher.versions.Version;
+import java.util.Set;
+import java.util.Collection;
+import java.util.HashSet;
+import net.minecraft.launcher.profile.Profile;
+import java.util.Iterator;
+import javax.swing.JOptionPane;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.text.MessageFormat;
-import java.util.*;
+import javax.swing.ListCellRenderer;
+import javax.swing.JLabel;
+import java.awt.Component;
+import net.minecraft.launcher.versions.ReleaseType;
+import java.awt.Insets;
+import java.awt.GridBagConstraints;
+import net.minecraft.launcher.updater.VersionSyncInfo;
+import javax.swing.border.Border;
+import javax.swing.BorderFactory;
+import java.awt.LayoutManager;
+import java.awt.GridBagLayout;
+import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JComboBox;
+import net.minecraft.launcher.events.RefreshedVersionsListener;
+import javax.swing.JPanel;
 
-public class ProfileVersionPanel extends JPanel
-        implements RefreshedVersionsListener {
-    private ResourceBundle resourceBundle = LocaleHelper.getMessages();
+public class ProfileVersionPanel extends JPanel implements RefreshedVersionsListener
+{
     private final ProfileEditorPopup editor;
-    private final JComboBox versionList = new JComboBox();
-    private final List<ReleaseTypeCheckBox> customVersionTypes = new ArrayList();
-
-    public ProfileVersionPanel(ProfileEditorPopup editor) {
+    private final JComboBox versionList;
+    private final List<ReleaseTypeCheckBox> customVersionTypes;
+    
+    public ProfileVersionPanel(final ProfileEditorPopup editor) {
+        super();
+        this.versionList = new JComboBox();
+        this.customVersionTypes = new ArrayList<ReleaseTypeCheckBox>();
         this.editor = editor;
-
-        setLayout(new GridBagLayout());
-        setBorder(BorderFactory.createTitledBorder(resourceBundle.getString("version.selection")));
-
-        createInterface();
-        addEventHandlers();
-
-        List versions = editor.getLauncher().getVersionManager().getVersions(editor.getProfile().getVersionFilter());
-
-        if (versions.isEmpty())
+        this.setLayout(new GridBagLayout());
+        this.setBorder(BorderFactory.createTitledBorder("Version Selection"));
+        this.createInterface();
+        this.addEventHandlers();
+        final List<VersionSyncInfo> versions = editor.getLauncher().getVersionManager().getVersions(editor.getProfile().getVersionFilter());
+        if (versions.isEmpty()) {
             editor.getLauncher().getVersionManager().addRefreshedVersionsListener(this);
-        else
-            populateVersions(versions);
+        }
+        else {
+            this.populateVersions(versions);
+        }
     }
-
+    
     protected void createInterface() {
-        GridBagConstraints constraints = new GridBagConstraints();
+        final GridBagConstraints constraints = new GridBagConstraints();
         constraints.insets = new Insets(2, 2, 2, 2);
         constraints.anchor = 17;
-
         constraints.gridy = 0;
-
-        for (ReleaseType type : ReleaseType.values()) {
+        for (final ReleaseType type : ReleaseType.values()) {
             if (type.getDescription() != null) {
-                ReleaseTypeCheckBox checkbox = new ReleaseTypeCheckBox(type);
+                final ReleaseTypeCheckBox checkbox = new ReleaseTypeCheckBox(type);
                 checkbox.setSelected(this.editor.getProfile().getVersionFilter().getTypes().contains(type));
                 this.customVersionTypes.add(checkbox);
-
                 constraints.fill = 2;
-                constraints.weightx = 1.0D;
+                constraints.weightx = 1.0;
                 constraints.gridwidth = 0;
-                add(checkbox, constraints);
+                this.add(checkbox, constraints);
                 constraints.gridwidth = 1;
-                constraints.weightx = 0.0D;
+                constraints.weightx = 0.0;
                 constraints.fill = 0;
-
-                constraints.gridy += 1;
+                final GridBagConstraints gridBagConstraints = constraints;
+                ++gridBagConstraints.gridy;
             }
         }
-        add(new JLabel(resourceBundle.getString("use.version")), constraints);
+        this.add(new JLabel("Use version:"), constraints);
         constraints.fill = 2;
-        constraints.weightx = 1.0D;
-        add(this.versionList, constraints);
-        constraints.weightx = 0.0D;
+        constraints.weightx = 1.0;
+        this.add(this.versionList, constraints);
+        constraints.weightx = 0.0;
         constraints.fill = 0;
-
-        constraints.gridy += 1;
-
+        final GridBagConstraints gridBagConstraints2 = constraints;
+        ++gridBagConstraints2.gridy;
         this.versionList.setRenderer(new VersionListRenderer());
     }
-
+    
     protected void addEventHandlers() {
         this.versionList.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
+            @Override
+            public void itemStateChanged(final ItemEvent e) {
                 ProfileVersionPanel.this.updateVersionSelection();
             }
         });
-        for (final ReleaseTypeCheckBox type : this.customVersionTypes)
+        for (final ReleaseTypeCheckBox type : this.customVersionTypes) {
             type.addItemListener(new ItemListener() {
                 private boolean isUpdating = false;
-
-                public void itemStateChanged(ItemEvent e) {
-                    if (this.isUpdating) return;
-                    if ((e.getStateChange() == 1) && (type.getType().getPopupWarning() != null)) {
-                        int result = JOptionPane.showConfirmDialog(ProfileVersionPanel.this.editor.getLauncher().getFrame(), MessageFormat.format("{0}\n\n" + resourceBundle.getString("0.n.nare.you.sure.you.want.to.continue"), type.getType().getPopupWarning()));
-
+                
+                @Override
+                public void itemStateChanged(final ItemEvent e) {
+                    if (this.isUpdating) {
+                        return;
+                    }
+                    if (e.getStateChange() == 1 && type.getType().getPopupWarning() != null) {
+                        final int result = JOptionPane.showConfirmDialog(ProfileVersionPanel.this.editor.getLauncher().getFrame(), type.getType().getPopupWarning() + "\n\nAre you sure you want to continue?");
                         this.isUpdating = true;
                         if (result == 0) {
                             type.setSelected(true);
                             ProfileVersionPanel.this.updateCustomVersionFilter();
-                        } else {
+                        }
+                        else {
                             type.setSelected(false);
                         }
                         this.isUpdating = false;
-                    } else {
+                    }
+                    else {
                         ProfileVersionPanel.this.updateCustomVersionFilter();
                     }
                 }
             });
+        }
     }
-
+    
     private void updateCustomVersionFilter() {
-        Profile profile = this.editor.getProfile();
-        Set newTypes = new HashSet(Profile.DEFAULT_RELEASE_TYPES);
-
-        for (ReleaseTypeCheckBox type : this.customVersionTypes) {
-            if (type.isSelected())
+        final Profile profile = this.editor.getProfile();
+        final Set<ReleaseType> newTypes = new HashSet<ReleaseType>(Profile.DEFAULT_RELEASE_TYPES);
+        for (final ReleaseTypeCheckBox type : this.customVersionTypes) {
+            if (type.isSelected()) {
                 newTypes.add(type.getType());
+            }
             else {
                 newTypes.remove(type.getType());
             }
         }
-
-        if (newTypes.equals(Profile.DEFAULT_RELEASE_TYPES))
+        if (newTypes.equals(Profile.DEFAULT_RELEASE_TYPES)) {
             profile.setAllowedReleaseTypes(null);
+        }
         else {
             profile.setAllowedReleaseTypes(newTypes);
         }
-
-        populateVersions(this.editor.getLauncher().getVersionManager().getVersions(this.editor.getProfile().getVersionFilter()));
+        this.populateVersions(this.editor.getLauncher().getVersionManager().getVersions(this.editor.getProfile().getVersionFilter()));
         this.editor.getLauncher().getVersionManager().removeRefreshedVersionsListener(this);
     }
-
+    
     private void updateVersionSelection() {
-        Object selection = this.versionList.getSelectedItem();
-
-        if ((selection instanceof VersionSyncInfo)) {
-            Version version = ((VersionSyncInfo) selection).getLatestVersion();
+        final Object selection = this.versionList.getSelectedItem();
+        if (selection instanceof VersionSyncInfo) {
+            final Version version = ((VersionSyncInfo)selection).getLatestVersion();
             this.editor.getProfile().setLastVersionId(version.getId());
-        } else {
+        }
+        else {
             this.editor.getProfile().setLastVersionId(null);
         }
     }
-
-    private void populateVersions(List<VersionSyncInfo> versions) {
-        String previous = this.editor.getProfile().getLastVersionId();
+    
+    private void populateVersions(final List<VersionSyncInfo> versions) {
+        final String previous = this.editor.getProfile().getLastVersionId();
         VersionSyncInfo selected = null;
-
         this.versionList.removeAllItems();
-        this.versionList.addItem(resourceBundle.getString("use.latest.version"));
-
-        for (VersionSyncInfo version : versions) {
+        this.versionList.addItem("Use Latest Version");
+        for (final VersionSyncInfo version : versions) {
             if (version.getLatestVersion().getId().equals(previous)) {
                 selected = version;
             }
-
             this.versionList.addItem(version);
         }
-
-        if ((selected == null) && (!versions.isEmpty()))
+        if (selected == null && !versions.isEmpty()) {
             this.versionList.setSelectedIndex(0);
-        else
+        }
+        else {
             this.versionList.setSelectedItem(selected);
+        }
     }
-
-    public void onVersionsRefreshed(VersionManager manager) {
-        List versions = manager.getVersions(this.editor.getProfile().getVersionFilter());
-        populateVersions(versions);
+    
+    @Override
+    public void onVersionsRefreshed(final VersionManager manager) {
+        final List<VersionSyncInfo> versions = manager.getVersions(this.editor.getProfile().getVersionFilter());
+        this.populateVersions(versions);
         this.editor.getLauncher().getVersionManager().removeRefreshedVersionsListener(this);
     }
-
+    
+    @Override
     public boolean shouldReceiveEventsInUIThread() {
         return true;
     }
-
-    private static class ReleaseTypeCheckBox extends JCheckBox {
+    
+    private static class ReleaseTypeCheckBox extends JCheckBox
+    {
         private final ReleaseType type;
-
-        private ReleaseTypeCheckBox(ReleaseType type) {
+        
+        private ReleaseTypeCheckBox(final ReleaseType type) {
             super(type.getDescription());
             this.type = type;
         }
-
+        
         public ReleaseType getType() {
             return this.type;
         }
     }
-
-    private static class VersionListRenderer extends BasicComboBoxRenderer {
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            if ((value instanceof VersionSyncInfo)) {
-                VersionSyncInfo syncInfo = (VersionSyncInfo) value;
-                Version version = syncInfo.getLatestVersion();
-
-                value = String.format("%s %s", new Object[]{version.getType().getName(), version.getId()});
+    
+    private static class VersionListRenderer extends BasicComboBoxRenderer
+    {
+        @Override
+        public Component getListCellRendererComponent(final JList list, Object value, final int index, final boolean isSelected, final boolean cellHasFocus) {
+            if (value instanceof VersionSyncInfo) {
+                final VersionSyncInfo syncInfo = (VersionSyncInfo)value;
+                final Version version = syncInfo.getLatestVersion();
+                value = String.format("%s %s", version.getType().getName(), version.getId());
             }
-
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             return this;
         }

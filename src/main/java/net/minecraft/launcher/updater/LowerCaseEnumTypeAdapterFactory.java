@@ -1,50 +1,52 @@
 package net.minecraft.launcher.updater;
 
-import com.google.gson.Gson;
-import com.google.gson.TypeAdapter;
-import com.google.gson.TypeAdapterFactory;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-import com.google.gson.stream.JsonWriter;
-
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.Locale;
+import com.google.gson.stream.JsonToken;
+import com.google.gson.stream.JsonReader;
+import java.io.IOException;
+import com.google.gson.stream.JsonWriter;
 import java.util.Map;
+import java.util.HashMap;
+import com.google.gson.TypeAdapter;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.TypeAdapterFactory;
 
-public class LowerCaseEnumTypeAdapterFactory
-        implements TypeAdapterFactory {
-    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
-        Class rawType = type.getRawType();
+public class LowerCaseEnumTypeAdapterFactory implements TypeAdapterFactory
+{
+    @Override
+    public <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> type) {
+        final Class<T> rawType = (Class<T>)type.getRawType();
         if (!rawType.isEnum()) {
             return null;
         }
-
-        final Map lowercaseToConstant = new HashMap();
-        for (Object constant : rawType.getEnumConstants()) {
-            lowercaseToConstant.put(toLowercase(constant), constant);
+        final Map<String, T> lowercaseToConstant = new HashMap<String, T>();
+        for (final T constant : rawType.getEnumConstants()) {
+            lowercaseToConstant.put(this.toLowercase(constant), constant);
         }
-
-        return new TypeAdapter() {
-            public void write(JsonWriter out, Object value) throws IOException {
-                if (value == null)
+        return new TypeAdapter<T>() {
+            @Override
+            public void write(final JsonWriter out, final T value) throws IOException {
+                if (value == null) {
                     out.nullValue();
-                else
+                }
+                else {
                     out.value(LowerCaseEnumTypeAdapterFactory.this.toLowercase(value));
+                }
             }
-
-            public T read(JsonReader reader) throws IOException {
+            
+            @Override
+            public T read(final JsonReader reader) throws IOException {
                 if (reader.peek() == JsonToken.NULL) {
                     reader.nextNull();
                     return null;
                 }
-                return (T) lowercaseToConstant.get(reader.nextString());
+                return lowercaseToConstant.get(reader.nextString());
             }
         };
     }
-
-    private String toLowercase(Object o) {
+    
+    private String toLowercase(final Object o) {
         return o.toString().toLowerCase(Locale.US);
     }
 }

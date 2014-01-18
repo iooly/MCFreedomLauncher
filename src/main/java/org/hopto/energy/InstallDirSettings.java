@@ -19,7 +19,7 @@ public class InstallDirSettings {
 
         File file = new File(fileLocation);
         File workingDirectory;
-
+              System.out.println(file.getAbsoluteFile());
 
         if (!file.exists()) {
             workingDirectory = changeDirInternal(frame, defaultWorkingDir, prop, file);

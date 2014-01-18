@@ -1,5 +1,6 @@
 package net.minecraft.launcher.process;
 
-public abstract interface JavaProcessRunnable {
-    public abstract void onJavaProcessEnded(JavaProcess paramJavaProcess);
+public interface JavaProcessRunnable
+{
+    void onJavaProcessEnded(JavaProcess p0);
 }

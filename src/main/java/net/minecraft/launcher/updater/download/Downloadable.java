@@ -1,188 +1,160 @@
 package net.minecraft.launcher.updater.download;
 
-import java.io.*;
-import java.math.BigInteger;
+import org.apache.logging.log4j.LogManager;
+import java.security.NoSuchAlgorithmException;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.Proxy;
-import java.net.URL;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.io.Closeable;
+import java.io.InputStream;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.io.FileInputStream;
+import java.net.Proxy;
+import java.io.File;
+import java.net.URL;
+import org.apache.logging.log4j.Logger;
 
-public class Downloadable {
+public abstract class Downloadable
+{
+    private static final Logger LOGGER;
     private final URL url;
     private final File target;
     private final boolean forceDownload;
     private final Proxy proxy;
     private final ProgressContainer monitor;
-    private int numAttempts;
+    protected int numAttempts;
     private long expectedSize;
-
-    public Downloadable(Proxy proxy, URL remoteFile, File localFile, boolean forceDownload) {
+    
+    public Downloadable(final Proxy proxy, final URL remoteFile, final File localFile, final boolean forceDownload) {
+        super();
         this.proxy = proxy;
         this.url = remoteFile;
         this.target = localFile;
         this.forceDownload = forceDownload;
         this.monitor = new ProgressContainer();
     }
-
+    
     public ProgressContainer getMonitor() {
         return this.monitor;
     }
-
+    
     public long getExpectedSize() {
         return this.expectedSize;
     }
-
-    public void setExpectedSize(long expectedSize) {
+    
+    public void setExpectedSize(final long expectedSize) {
         this.expectedSize = expectedSize;
     }
-
-    public String download() throws IOException {
-        String localMd5 = null;
-        this.numAttempts += 1;
-
-        if ((this.target.getParentFile() != null) && (!this.target.getParentFile().isDirectory())) {
-            this.target.getParentFile().mkdirs();
-        }
-        if ((!this.forceDownload) && (this.target.isFile())) {
-            localMd5 = getMD5(this.target);
-        }
-
-        if ((this.target.isFile()) && (!this.target.canWrite())) {
-            throw new RuntimeException("Do not have write permissions for " + this.target + " - aborting!");
-        }
+    
+    public static String getDigest(final File file, final String algorithm, final int hashLength) {
+        DigestInputStream stream = null;
         try {
-            HttpURLConnection connection = makeConnection(localMd5);
-            int status = connection.getResponseCode();
-
-            if (status == 304)
-                return "Used own copy as it matched etag";
-            if (status / 100 == 2) {
-                if (this.expectedSize == 0L)
-                    this.monitor.setTotal(connection.getContentLength());
-                else {
-                    this.monitor.setTotal(this.expectedSize);
-                }
-
-                InputStream inputStream = new MonitoringInputStream(connection.getInputStream(), this.monitor);
-                FileOutputStream outputStream = new FileOutputStream(this.target);
-                String md5 = copyAndDigest(inputStream, outputStream);
-                String etag = getEtag(connection);
-
-                if (etag.contains("-")) {
-                    return "Didn't have etag so assuming our copy is good";
-                }
-                if (etag.equalsIgnoreCase(md5)) {
-                    return "Downloaded successfully and etag matched";
-                }
-                throw new RuntimeException(String.format("E-tag did not match downloaded MD5 (ETag was %s, downloaded %s)", new Object[]{etag, md5}));
-            }
-            if (this.target.isFile()) {
-                return "Couldn't connect to server (responded with " + status + ") but have local file, assuming it's good";
-            }
-            throw new RuntimeException("Server responded with " + status);
-        } catch (IOException e) {
-            if (this.target.isFile()) {
-                return "Couldn't connect to server (" + e.getClass().getSimpleName() + ": '" + e.getMessage() + "') but have local file, assuming it's good";
-            }
-            throw e;
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Missing Digest.MD5", e);
+            stream = new DigestInputStream(new FileInputStream(file), MessageDigest.getInstance(algorithm));
+            final byte[] buffer = new byte[65536];
+            int read;
+            do {
+                read = stream.read(buffer);
+            } while (read > 0);
+        }
+        catch (Exception ignored) {
+            return null;
+        }
+        finally {
+            closeSilently(stream);
+        }
+        return String.format("%1$0" + hashLength + "x", new BigInteger(1, stream.getMessageDigest().digest()));
+    }
+    
+    public abstract String download() throws IOException;
+    
+    protected void updateExpectedSize(final HttpURLConnection connection) {
+        if (this.expectedSize == 0L) {
+            this.monitor.setTotal(connection.getContentLength());
+            this.setExpectedSize(connection.getContentLength());
+        }
+        else {
+            this.monitor.setTotal(this.expectedSize);
         }
     }
-
-    protected HttpURLConnection makeConnection(String localMd5) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) this.url.openConnection(this.proxy);
-
+    
+    protected HttpURLConnection makeConnection(final URL url) throws IOException {
+        final HttpURLConnection connection = (HttpURLConnection)url.openConnection(this.proxy);
         connection.setUseCaches(false);
         connection.setDefaultUseCaches(false);
         connection.setRequestProperty("Cache-Control", "no-store,max-age=0,no-cache");
         connection.setRequestProperty("Expires", "0");
         connection.setRequestProperty("Pragma", "no-cache");
-        if (localMd5 != null) connection.setRequestProperty("If-None-Match", localMd5);
-
-        connection.connect();
-
+        connection.setConnectTimeout(5000);
+        connection.setReadTimeout(30000);
         return connection;
     }
-
+    
     public URL getUrl() {
         return this.url;
     }
-
+    
     public File getTarget() {
         return this.target;
     }
-
+    
     public boolean shouldIgnoreLocal() {
         return this.forceDownload;
     }
-
+    
     public int getNumAttempts() {
         return this.numAttempts;
     }
-
+    
     public Proxy getProxy() {
         return this.proxy;
     }
-
-    public static String getMD5(File file) {
-        DigestInputStream stream = null;
-        try {
-            stream = new DigestInputStream(new FileInputStream(file), MessageDigest.getInstance("MD5"));
-            byte[] buffer = new byte[65536];
-
-            int read = stream.read(buffer);
-            while (read >= 1)
-                read = stream.read(buffer);
-        } catch (Exception ignored) {
-            int read;
-            return null;
-        } finally {
-            closeSilently(stream);
-        }
-
-        return String.format("%1$032x", new Object[]{new BigInteger(1, stream.getMessageDigest().digest())});
-    }
-
-    public static void closeSilently(Closeable closeable) {
-        if (closeable != null)
+    
+    public static void closeSilently(final Closeable closeable) {
+        if (closeable != null) {
             try {
                 closeable.close();
-            } catch (IOException localIOException) {
             }
+            catch (IOException ex) {}
+        }
     }
-
-    public static String copyAndDigest(InputStream inputStream, OutputStream outputStream) throws IOException, NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("MD5");
-        byte[] buffer = new byte[65536];
+    
+    public static String copyAndDigest(final InputStream inputStream, final OutputStream outputStream, final String algorithm, final int hashLength) throws IOException {
+        MessageDigest digest;
         try {
-            int read = inputStream.read(buffer);
-            while (read >= 1) {
+            digest = MessageDigest.getInstance(algorithm);
+        }
+        catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Missing Digest." + algorithm, e);
+        }
+        final byte[] buffer = new byte[65536];
+        try {
+            for (int read = inputStream.read(buffer); read >= 1; read = inputStream.read(buffer)) {
                 digest.update(buffer, 0, read);
                 outputStream.write(buffer, 0, read);
-                read = inputStream.read(buffer);
             }
-        } finally {
+        }
+        finally {
             closeSilently(inputStream);
             closeSilently(outputStream);
         }
-
-        return String.format("%1$032x", new Object[]{new BigInteger(1, digest.digest())});
+        return String.format("%1$0" + hashLength + "x", new BigInteger(1, digest.digest()));
     }
-
-    public static String getEtag(HttpURLConnection connection) {
-        return getEtag(connection.getHeaderField("ETag"));
-    }
-
-    public static String getEtag(String etag) {
-        if (etag == null)
-            etag = "-";
-        else if ((etag.startsWith("\"")) && (etag.endsWith("\""))) {
-            etag = etag.substring(1, etag.length() - 1);
+    
+    protected void ensureFileWritable() {
+        if (this.target.getParentFile() != null && !this.target.getParentFile().isDirectory()) {
+            Downloadable.LOGGER.info("Making directory " + this.target.getParentFile());
+            if (!this.target.getParentFile().mkdirs() && !this.target.getParentFile().isDirectory()) {
+                throw new RuntimeException("Could not create directory " + this.target.getParentFile());
+            }
         }
-
-        return etag;
+        if (this.target.isFile() && !this.target.canWrite()) {
+            throw new RuntimeException("Do not have write permissions for " + this.target + " - aborting!");
+        }
+    }
+    
+    static {
+        LOGGER = LogManager.getLogger();
     }
 }
