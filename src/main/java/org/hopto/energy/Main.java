@@ -5,7 +5,6 @@ import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import net.minecraft.launcher.Launcher;
-import net.minecraft.launcher.locale.LocaleHelper;
 
 import javax.swing.*;
 import java.io.File;
@@ -24,7 +23,7 @@ public class Main {
             throws IOException {
 
         Launcher.setLookAndFeel();
-        LocaleHelper.setCurrentLocale(LangSelection.getLocale());
+        //LocaleHelper.setCurrentLocale(LangSelection.getLocale());
 
 
         System.setProperty("java.net.preferIPv4Stack", "true");
