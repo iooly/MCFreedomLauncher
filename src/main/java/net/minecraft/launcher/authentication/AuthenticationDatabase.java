@@ -1,26 +1,15 @@
 package net.minecraft.launcher.authentication;
 
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonParseException;
+import com.google.gson.*;
 import com.mojang.authlib.Agent;
+import com.mojang.authlib.AuthenticationService;
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.UserAuthentication;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import net.minecraft.launcher.Launcher;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.JsonDeserializationContext;
+
 import java.lang.reflect.Type;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonSerializer;
-import com.google.gson.JsonDeserializer;
-import java.util.Set;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collection;
-import com.mojang.authlib.GameProfile;
-import java.util.Iterator;
-import java.util.HashMap;
-import com.mojang.authlib.AuthenticationService;
-import com.mojang.authlib.UserAuthentication;
-import java.util.Map;
+import java.util.*;
 
 public class AuthenticationDatabase
 {
@@ -99,22 +88,51 @@ public class AuthenticationDatabase
     {
         @Override
         public AuthenticationDatabase deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
-            final TypeToken<HashMap<String, Map<String, String>>> token = new TypeToken<HashMap<String, Map<String, String>>>() {};
             final Map<String, UserAuthentication> services = new HashMap<String, UserAuthentication>();
-            final Map<String, Map<String, String>> credentials = (Map<String, Map<String, String>>)context.<Map<String, Map<String, String>>>deserialize(json, token.getType());
+            final Map<String, Map<String, Object>> credentials = this.deserializeCredentials((JsonObject) json, context);
             final YggdrasilAuthenticationService authService = new YggdrasilAuthenticationService(Launcher.getInstance().getProxy(), Launcher.getInstance().getClientToken().toString());
-            for (final Map.Entry<String, Map<String, String>> entry : credentials.entrySet()) {
+            for (final Map.Entry<String, Map<String, Object>> entry : credentials.entrySet()) {
                 final UserAuthentication auth = authService.createUserAuthentication(Agent.MINECRAFT);
                 auth.loadFromStorage(entry.getValue());
                 services.put(entry.getKey(), auth);
             }
             return new AuthenticationDatabase(services, authService);
         }
+
+        protected Map<String, Map<String, Object>> deserializeCredentials(final JsonObject json, final JsonDeserializationContext context) {
+            final Map<String, Map<String, Object>> result = new LinkedHashMap<String, Map<String, Object>>();
+            for (final Map.Entry<String, JsonElement> authEntry : json.entrySet()) {
+                final Map<String, Object> credentials = new LinkedHashMap<String, Object>();
+                for (final Map.Entry<String, JsonElement> credentialsEntry : ((JsonObject) authEntry.getValue()).entrySet()) {
+                    credentials.put(credentialsEntry.getKey(), this.deserializeCredential(credentialsEntry.getValue()));
+                }
+                result.put(authEntry.getKey(), credentials);
+            }
+            return result;
+        }
+
+        private Object deserializeCredential(final JsonElement element) {
+            if (element instanceof JsonObject) {
+                final Map<String, Object> result = new LinkedHashMap<String, Object>();
+                for (final Map.Entry<String, JsonElement> entry : ((JsonObject) element).entrySet()) {
+                    result.put(entry.getKey(), this.deserializeCredential(entry.getValue()));
+                }
+                return result;
+            }
+            if (element instanceof JsonArray) {
+                final List<Object> result2 = new ArrayList<Object>();
+                for (final JsonElement entry2 : (JsonArray) element) {
+                    result2.add(this.deserializeCredential(entry2));
+                }
+                return result2;
+            }
+            return element.getAsString();
+        }
         
         @Override
         public JsonElement serialize(final AuthenticationDatabase src, final Type typeOfSrc, final JsonSerializationContext context) {
             final Map<String, UserAuthentication> services = src.authById;
-            final Map<String, Map<String, String>> credentials = new HashMap<String, Map<String, String>>();
+            final Map<String, Map<String, Object>> credentials = new HashMap<String, Map<String, Object>>();
             for (final Map.Entry<String, UserAuthentication> entry : services.entrySet()) {
                 credentials.put(entry.getKey(), ((UserAuthentication)entry.getValue()).saveForStorage());
             }

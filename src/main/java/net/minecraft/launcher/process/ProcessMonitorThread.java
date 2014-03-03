@@ -1,23 +1,22 @@
 package net.minecraft.launcher.process;
 
-import org.apache.logging.log4j.LogManager;
 import org.apache.commons.io.IOUtils;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class ProcessMonitorThread extends Thread
-{
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+public class ProcessMonitorThread extends Thread {
     private static final Logger LOGGER;
     private final JavaProcess process;
-    
+
     public ProcessMonitorThread(final JavaProcess process) {
         super();
         this.process = process;
     }
-    
+
     @Override
     public void run() {
         final InputStreamReader reader = new InputStreamReader(this.process.getRawProcess().getInputStream());
@@ -27,13 +26,13 @@ public class ProcessMonitorThread extends Thread
             try {
                 while ((line = buf.readLine()) != null) {
                     ProcessMonitorThread.LOGGER.info("Client> " + line);
-                    this.process.getSysOutLines().add(line);
+                    if (this.process.getSysOutFilter().apply(line) == Boolean.TRUE) {
+                        this.process.getSysOutLines().add(line);
+                    }
                 }
-            }
-            catch (IOException ex) {
+            } catch (IOException ex) {
                 ProcessMonitorThread.LOGGER.error(ex);
-            }
-            finally {
+            } finally {
                 IOUtils.closeQuietly(reader);
             }
         }
@@ -42,7 +41,7 @@ public class ProcessMonitorThread extends Thread
             onExit.onJavaProcessEnded(this.process);
         }
     }
-    
+
     static {
         LOGGER = LogManager.getLogger();
     }

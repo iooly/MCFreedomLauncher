@@ -1,31 +1,16 @@
 package com.mojang.authlib.yggdrasil.response;
 
-import java.util.List;
+import com.mojang.authlib.properties.PropertyMap;
 
-public class User
-{
+public class User {
     private String id;
-    private List<Property> properties;
-    
+    private PropertyMap properties;
+
     public String getId() {
         return this.id;
     }
-    
-    public List<Property> getProperties() {
+
+    public PropertyMap getProperties() {
         return this.properties;
-    }
-    
-    public class Property
-    {
-        private String name;
-        private String value;
-        
-        public String getKey() {
-            return this.name;
-        }
-        
-        public String getValue() {
-            return this.value;
-        }
     }
 }

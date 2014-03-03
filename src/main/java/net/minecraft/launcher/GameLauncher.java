@@ -1,77 +1,50 @@
 package net.minecraft.launcher;
 
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import org.apache.logging.log4j.LogManager;
-import java.io.InputStream;
+import com.google.common.base.Function;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.mojang.authlib.UserAuthentication;
+import com.mojang.authlib.UserType;
+import com.mojang.authlib.properties.PropertyMap;
+import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
+import net.minecraft.launcher.process.JavaProcess;
+import net.minecraft.launcher.process.JavaProcessLauncher;
+import net.minecraft.launcher.process.JavaProcessRunnable;
+import net.minecraft.launcher.profile.LauncherVisibilityRule;
+import net.minecraft.launcher.profile.Profile;
 import net.minecraft.launcher.ui.tabs.CrashReportTab;
-import java.io.Reader;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.FileInputStream;
-import java.util.Enumeration;
+import net.minecraft.launcher.updater.DateTypeAdapter;
+import net.minecraft.launcher.updater.LocalVersionList;
+import net.minecraft.launcher.updater.VersionList;
+import net.minecraft.launcher.updater.VersionSyncInfo;
+import net.minecraft.launcher.updater.download.DownloadJob;
+import net.minecraft.launcher.updater.download.DownloadListener;
+import net.minecraft.launcher.updater.download.Downloadable;
+import net.minecraft.launcher.updater.download.assets.AssetIndex;
+import net.minecraft.launcher.versions.CompleteVersion;
 import net.minecraft.launcher.versions.ExtractRules;
-import java.io.Closeable;
-import java.io.OutputStream;
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
-import java.io.BufferedInputStream;
+import net.minecraft.launcher.versions.Library;
+import org.apache.commons.io.Charsets;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.*;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.StrSubstitutor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import javax.swing.*;
+import java.io.*;
+import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.Proxy;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import net.minecraft.launcher.versions.Library;
-import net.minecraft.launcher.updater.download.Downloadable;
-import java.util.Collection;
-import java.util.TreeSet;
-import org.apache.commons.io.filefilter.TrueFileFilter;
-import org.apache.commons.io.filefilter.FileFilterUtils;
-import org.apache.commons.io.filefilter.PrefixFileFilter;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import java.io.FileFilter;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
-import org.apache.commons.io.filefilter.AgeFileFilter;
-import com.mojang.authlib.UserType;
-import java.util.UUID;
-import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
-import org.apache.commons.lang3.text.StrSubstitutor;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Date;
-import java.util.Map;
-import org.apache.commons.io.Charsets;
-import net.minecraft.launcher.updater.download.assets.AssetIndex;
-import net.minecraft.launcher.process.JavaProcess;
-import java.net.PasswordAuthentication;
-import com.mojang.authlib.UserAuthentication;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import org.apache.commons.lang3.StringUtils;
-import net.minecraft.launcher.process.JavaProcessLauncher;
-import net.minecraft.launcher.updater.VersionList;
-import java.awt.Component;
-import javax.swing.JOptionPane;
-import net.minecraft.launcher.updater.LocalVersionList;
-import net.minecraft.launcher.versions.Version;
-import java.io.IOException;
-import net.minecraft.launcher.updater.VersionSyncInfo;
-import net.minecraft.launcher.profile.Profile;
-import javax.swing.SwingUtilities;
-import org.apache.commons.io.FileUtils;
-import java.util.ArrayList;
-import java.io.File;
-import net.minecraft.launcher.profile.LauncherVisibilityRule;
-import net.minecraft.launcher.versions.CompleteVersion;
-import net.minecraft.launcher.updater.DateTypeAdapter;
-import com.google.gson.Gson;
-import net.minecraft.launcher.updater.download.DownloadJob;
-import java.util.List;
-import org.apache.logging.log4j.Logger;
-import net.minecraft.launcher.updater.download.DownloadListener;
-import net.minecraft.launcher.process.JavaProcessRunnable;
 
 public class GameLauncher implements JavaProcessRunnable, DownloadListener
 {
     private static final Logger LOGGER;
+    private static final String CRASH_IDENTIFIER_MAGIC = "#@!@#";
     private final Object lock;
     private final Launcher launcher;
     private final List<DownloadJob> jobs;
@@ -182,12 +155,12 @@ public class GameLauncher implements JavaProcessRunnable, DownloadListener
                 this.setWorking(false);
                 return;
             }
-            if (this.version.getMinimumLauncherVersion() > 13) {
+            if (this.version.getMinimumLauncherVersion() > 14) {
                 GameLauncher.LOGGER.error("An update to your launcher is available and is required to play " + this.version.getId() + ". Please restart your launcher.");
                 this.setWorking(false);
                 return;
             }
-            if (!syncInfo.isInstalled()) {
+            if (!syncInfo.isUpToDate()) {
                 try {
                     final VersionList localVersionList = this.launcher.getVersionManager().getLocalVersionList();
                     if (localVersionList instanceof LocalVersionList) {
@@ -259,7 +232,12 @@ public class GameLauncher implements JavaProcessRunnable, DownloadListener
             GameLauncher.LOGGER.error("Aborting launch; game directory is not actually a directory");
             return;
         }
-        final JavaProcessLauncher processLauncher = new JavaProcessLauncher(selectedProfile.getJavaPath(), new String[0]);
+        final JavaProcessLauncher processLauncher = new JavaProcessLauncher(selectedProfile.getJavaPath(), new Function<String, Boolean>() {
+            @Override
+            public Boolean apply(final String input) {
+                return input.contains("#@!@#");
+            }
+        }, new String[0]);
         processLauncher.directory(gameDirectory);
         final OperatingSystem os = OperatingSystem.getCurrentPlatform();
         if (os.equals(OperatingSystem.OSX)) {
@@ -326,7 +304,7 @@ public class GameLauncher implements JavaProcessRunnable, DownloadListener
         final File objectsDir = new File(assetsDir, "objects");
         final String assetVersion = (this.version.getAssets() == null) ? "legacy" : this.version.getAssets();
         final File indexFile = new File(indexDir, assetVersion + ".json");
-        final AssetIndex index = this.gson.fromJson(FileUtils.readFileToString(indexFile, Charsets.UTF_8), AssetIndex.class);
+        final AssetIndex index = this.gson.<AssetIndex>fromJson(FileUtils.readFileToString(indexFile, Charsets.UTF_8), AssetIndex.class);
         final String hash = index.getFileMap().get(name).getHash();
         return new File(objectsDir, hash.substring(0, 2) + "/" + hash);
     }
@@ -342,12 +320,12 @@ public class GameLauncher implements JavaProcessRunnable, DownloadListener
             GameLauncher.LOGGER.warn("No assets index file " + virtualRoot + "; can't reconstruct assets");
             return virtualRoot;
         }
-        final AssetIndex index = (AssetIndex)this.gson.<AssetIndex>fromJson(FileUtils.readFileToString(indexFile, Charsets.UTF_8), AssetIndex.class);
+        final AssetIndex index = this.gson.<AssetIndex>fromJson(FileUtils.readFileToString(indexFile, Charsets.UTF_8), AssetIndex.class);
         if (index.isVirtual()) {
             GameLauncher.LOGGER.info("Reconstructing virtual assets folder at " + virtualRoot);
             for (final Map.Entry<String, AssetIndex.AssetObject> entry : index.getFileMap().entrySet()) {
                 final File target = new File(virtualRoot, entry.getKey());
-                final File original = new File(new File(objectDir, ((AssetIndex.AssetObject)entry.getValue()).getHash().substring(0, 2)), ((AssetIndex.AssetObject)entry.getValue()).getHash());
+                final File original = new File(new File(objectDir, entry.getValue().getHash().substring(0, 2)), entry.getValue().getHash());
                 if (!target.isFile()) {
                     FileUtils.copyFile(original, target, false);
                 }
@@ -367,7 +345,8 @@ public class GameLauncher implements JavaProcessRunnable, DownloadListener
         final StrSubstitutor substitutor = new StrSubstitutor((Map<String, String>)map);
         final String[] split = version.getMinecraftArguments().split(" ");
         map.put("auth_access_token", authentication.getAuthenticatedToken());
-        map.put("user_properties", new Gson().toJson(authentication.getUserProperties()));
+        map.put("user_properties", new GsonBuilder().registerTypeAdapter(PropertyMap.class, new LegacyPropertyMapSerializer()).create().toJson(authentication.getUserProperties()));
+        map.put("user_property_map", new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(authentication.getUserProperties()));
         if (authentication.isLoggedIn() && authentication.canPlayOnline()) {
             if (authentication instanceof YggdrasilUserAuthentication) {
                 map.put("auth_session", String.format("token:%s:%s", authentication.getAuthenticatedToken(), authentication.getSelectedProfile().getId()));
@@ -419,8 +398,8 @@ public class GameLauncher implements JavaProcessRunnable, DownloadListener
         if (!sourceDir.isDirectory()) {
             return;
         }
-        final IOFileFilter migratableFilter = FileFilterUtils.notFileFilter(FileFilterUtils.or(FileFilterUtils.nameFileFilter("indexes"), FileFilterUtils.nameFileFilter("objects"), FileFilterUtils.nameFileFilter("virtual")));
-        for (final File file : new TreeSet<File>(FileUtils.listFiles(sourceDir, TrueFileFilter.TRUE, migratableFilter))) {
+        final IOFileFilter migratableFilter = FileFilterUtils.notFileFilter(FileFilterUtils.or(FileFilterUtils.nameFileFilter("indexes"), FileFilterUtils.nameFileFilter("objects"), FileFilterUtils.nameFileFilter("virtual"), FileFilterUtils.nameFileFilter("skins")));
+        for (final File file : (TreeSet<File>) new TreeSet(FileUtils.listFiles(sourceDir, TrueFileFilter.TRUE, migratableFilter))) {
             final String hash = Downloadable.getDigest(file, "SHA-1", 40);
             final File destinationFile = new File(objectsDir, hash.substring(0, 2) + "/" + hash);
             if (!destinationFile.exists()) {
@@ -437,7 +416,7 @@ public class GameLauncher implements JavaProcessRunnable, DownloadListener
         final File[] assets = sourceDir.listFiles();
         if (assets != null) {
             for (final File file2 : assets) {
-                if (!file2.getName().equals("indexes") && !file2.getName().equals("objects") && !file2.getName().equals("virtual")) {
+                if (!file2.getName().equals("indexes") && !file2.getName().equals("objects") && !file2.getName().equals("virtual") && !file2.getName().equals("skins")) {
                     GameLauncher.LOGGER.info("Cleaning up old assets directory {} after migration", file2);
                     FileUtils.deleteQuietly(file2);
                 }
@@ -542,13 +521,13 @@ public class GameLauncher implements JavaProcessRunnable, DownloadListener
                 }
             });
             String errorText = null;
-            final String[] sysOut = (String[])process.getSysOutLines().getItems();
+            final Collection<String> sysOutLines = process.getSysOutLines();
+            final String[] sysOut = sysOutLines.<String>toArray(new String[sysOutLines.size()]);
             for (int i = sysOut.length - 1; i >= 0; --i) {
                 final String line = sysOut[i];
-                final String crashIdentifier = "#@!@#";
-                final int pos = line.lastIndexOf(crashIdentifier);
-                if (pos >= 0 && pos < line.length() - crashIdentifier.length() - 1) {
-                    errorText = line.substring(pos + crashIdentifier.length()).trim();
+                final int pos = line.lastIndexOf("#@!@#");
+                if (pos >= 0 && pos < line.length() - "#@!@#".length() - 1) {
+                    errorText = line.substring(pos + "#@!@#".length()).trim();
                     break;
                 }
             }

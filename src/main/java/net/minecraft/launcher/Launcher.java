@@ -1,6 +1,5 @@
 package net.minecraft.launcher;
 
-import com.mojang.authlib.Agent;
 import com.mojang.authlib.UserAuthentication;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
@@ -30,13 +29,11 @@ import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class Launcher
-{
+public class Launcher {
     private static final Logger LOGGER;
     private static Launcher instance;
     private final VersionManager versionManager;
@@ -51,12 +48,12 @@ public class Launcher
     private final ProfileManager profileManager;
     private final ThreadPoolExecutor downloaderExecutorService;
     private UUID clientToken;
-    private static boolean onlineMode=false;
-    
+    private static boolean onlineMode = false;
+
     public Launcher(final JFrame frame, final File workingDirectory, final Proxy proxy, final PasswordAuthentication proxyAuth, final String[] args) {
         this(frame, workingDirectory, proxy, proxyAuth, args, 0);
     }
-    
+
     public Launcher(final JFrame frame, final File workingDirectory, final Proxy proxy, final PasswordAuthentication proxyAuth, final String[] args, final Integer bootstrapVersion) {
         super();
         this.downloaderExecutorService = new ExceptionalThreadPoolExecutor(16, 16, 30L, TimeUnit.SECONDS);
@@ -92,7 +89,7 @@ public class Launcher
         Launcher.LOGGER.info("System.getProperty('java.vendor') == '" + System.getProperty("java.vendor") + "'");
         Launcher.LOGGER.info("System.getProperty('sun.arch.data.model') == '" + System.getProperty("sun.arch.data.model") + "'");
     }
-    
+
     private void showOutdatedNotice() {
         final String error = "Sorry, but your launcher is outdated! Please redownload it at https://mojang.com/2013/06/minecraft-1-6-pre-release/";
         this.frame.getContentPane().removeAll();
@@ -100,25 +97,22 @@ public class Launcher
         if (result == 0) {
             try {
                 OperatingSystem.openLink(new URI("https://mojang.com/2013/06/minecraft-1-6-pre-release/"));
-            }
-            catch (URISyntaxException e) {
+            } catch (URISyntaxException e) {
                 Launcher.LOGGER.error("Couldn't open bootstrap download link. Please visit https://mojang.com/2013/06/minecraft-1-6-pre-release/ manually.", e);
             }
         }
         this.closeLauncher();
     }
-    
+
     public static void setLookAndFeel() {
         final JFrame frame = new JFrame();
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        }
-        catch (Throwable ignored) {
+        } catch (Throwable ignored) {
             try {
                 Launcher.LOGGER.error("Your java failed to provide normal look and feel, trying the old fallback now");
                 UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-            }
-            catch (Throwable t) {
+            } catch (Throwable t) {
                 Launcher.LOGGER.error("Unexpected exception setting look and feel", t);
             }
         }
@@ -127,110 +121,83 @@ public class Launcher
         frame.add(panel);
         try {
             frame.pack();
-        }
-        catch (Throwable ignored2) {
+        } catch (Throwable ignored2) {
             Launcher.LOGGER.error("Custom (broken) theme detected, falling back onto x-platform theme");
             try {
                 UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-            }
-            catch (Throwable ex) {
+            } catch (Throwable ex) {
                 Launcher.LOGGER.error("Unexpected exception setting look and feel", ex);
             }
         }
         frame.dispose();
     }
-    
+
     public void refreshVersionsAndProfiles() {
         this.versionManager.getExecutorService().submit(new Runnable() {
             @Override
             public void run() {
                 try {
                     Launcher.this.versionManager.refreshVersions();
-                }
-                catch (Throwable e) {
+                } catch (Throwable e) {
                     Launcher.LOGGER.error("Unexpected exception refreshing version list", e);
                 }
                 try {
                     Launcher.this.profileManager.loadProfiles();
                     Launcher.LOGGER.info("Loaded " + Launcher.this.profileManager.getProfiles().size() + " profile(s); selected '" + Launcher.this.profileManager.getSelectedProfile().getName() + "'");
-                }
-                catch (Throwable e) {
+                } catch (Throwable e) {
                     Launcher.LOGGER.error("Unexpected exception refreshing profile list", e);
                 }
                 Launcher.this.ensureLoggedIn();
             }
         });
     }
-    
+
     public void ensureLoggedIn() {
         final Profile selectedProfile = this.profileManager.getSelectedProfile();
         final UserAuthentication auth = this.profileManager.getAuthDatabase().getByUUID(selectedProfile.getPlayerUUID());
         if (auth == null) {
             this.showLoginPrompt();
-        }
-        else if (!auth.isLoggedIn()) {
+        } else if (!auth.isLoggedIn()) {
             if (auth.canLogIn()) {
                 try {
                     auth.logIn();
                     try {
                         this.profileManager.saveProfiles();
-                    }
-                    catch (IOException e) {
+                    } catch (IOException e) {
                         Launcher.LOGGER.error("Couldn't save profiles after refreshing auth!", e);
                     }
                     this.profileManager.fireRefreshEvent();
-                }
-                catch (AuthenticationException e2) {
+                } catch (AuthenticationException e2) {
                     Launcher.LOGGER.error("Exception whilst logging into profile", e2);
                     this.showLoginPrompt();
                 }
-            }
-            else {
+            } else {
                 this.showLoginPrompt();
             }
-        }
-        else if (!auth.canPlayOnline()) {
+        } else if (!auth.canPlayOnline()) {
             try {
                 Launcher.LOGGER.info("Refreshing auth...");
                 auth.logIn();
                 try {
                     this.profileManager.saveProfiles();
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     Launcher.LOGGER.error("Couldn't save profiles after refreshing auth!", e);
                 }
                 this.profileManager.fireRefreshEvent();
-            }
-            catch (InvalidCredentialsException e3) {
+            } catch (InvalidCredentialsException e3) {
                 Launcher.LOGGER.error("Exception whilst logging into profile", e3);
                 this.showLoginPrompt();
-            }
-            catch (AuthenticationException e2) {
+            } catch (AuthenticationException e2) {
                 Launcher.LOGGER.error("Exception whilst logging into profile", e2);
             }
         }
     }
-    
+
     public void showLoginPrompt() {
         try {
             this.profileManager.saveProfiles();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             Launcher.LOGGER.error("Couldn't save profiles before logging in!", e);
-        }
-        for (final Profile profile : this.profileManager.getProfiles().values()) {
-            final Map<String, String> credentials = profile.getAuthentication();
-            if (credentials != null) {
-                final UserAuthentication auth = this.profileManager.getAuthDatabase().getAuthenticationService().createUserAuthentication(Agent.MINECRAFT);
-                auth.loadFromStorage(credentials);
-                if (auth.isLoggedIn()) {
-                    final String uuid = (auth.getSelectedProfile() == null) ? ("demo-" + auth.getUserID()) : auth.getSelectedProfile().getId();
-                    if (this.profileManager.getAuthDatabase().getByUUID(uuid) == null) {
-                        this.profileManager.getAuthDatabase().register(uuid, auth);
-                    }
-                }
-                profile.setAuthentication(null);
-            }
         }
         final Profile selectedProfile = this.profileManager.getSelectedProfile();
         LogInPopup.showLoginPrompt(this, new LogInPopup.Callback() {
@@ -241,7 +208,8 @@ public class Launcher
                 if (selectedProfile.getName().equals("(Default)") && auth.getSelectedProfile() != null) {
                     final String playerName = auth.getSelectedProfile().getName();
                     String profileName = auth.getSelectedProfile().getName();
-                    for (int count = 1; Launcher.this.profileManager.getProfiles().containsKey(profileName); profileName = playerName + " " + ++count) {}
+                    for (int count = 1; Launcher.this.profileManager.getProfiles().containsKey(profileName); profileName = playerName + " " + ++count) {
+                    }
                     final Profile newProfile = new Profile(selectedProfile);
                     newProfile.setName(profileName);
                     Launcher.this.profileManager.getProfiles().put(profileName, newProfile);
@@ -250,28 +218,26 @@ public class Launcher
                 }
                 try {
                     Launcher.this.profileManager.saveProfiles();
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     Launcher.LOGGER.error("Couldn't save profiles after logging in!", e);
                 }
                 if (uuid == null) {
                     Launcher.this.closeLauncher();
-                }
-                else {
+                } else {
                     Launcher.this.profileManager.fireRefreshEvent();
                 }
                 Launcher.this.launcherPanel.setCard("launcher", null);
             }
         });
     }
-    
+
     public void closeLauncher() {
         this.frame.dispatchEvent(new WindowEvent(this.frame, 201));
     }
-    
+
     protected void initializeFrame() {
         this.frame.getContentPane().removeAll();
-        this.frame.setTitle("Minecraft Freedom Launcher 1.3.8");
+        this.frame.setTitle("Minecraft Freedom Launcher 1.3.10");
         this.frame.setPreferredSize(new Dimension(900, 580));
         this.frame.setDefaultCloseOperation(2);
         this.frame.addWindowListener(new WindowAdapter() {
@@ -287,65 +253,65 @@ public class Launcher
             if (in != null) {
                 this.frame.setIconImage(ImageIO.read(in));
             }
+        } catch (IOException ex) {
         }
-        catch (IOException ex) {}
         this.frame.add(this.launcherPanel);
         this.frame.pack();
         this.frame.setVisible(true);
     }
-    
+
     public VersionManager getVersionManager() {
         return this.versionManager;
     }
-    
+
     public JFrame getFrame() {
         return this.frame;
     }
-    
+
     public LauncherPanel getLauncherPanel() {
         return this.launcherPanel;
     }
-    
+
     public GameLauncher getGameLauncher() {
         return this.gameLauncher;
     }
-    
+
     public File getWorkingDirectory() {
         return this.workingDirectory;
     }
-    
+
     public Proxy getProxy() {
         return this.proxy;
     }
-    
+
     public PasswordAuthentication getProxyAuth() {
         return this.proxyAuth;
     }
-    
+
     public String[] getAdditionalArgs() {
         return this.additionalArgs;
     }
-    
+
     public int getBootstrapVersion() {
         return this.bootstrapVersion;
     }
-    
+
     public static Launcher getInstance() {
         return Launcher.instance;
     }
-    
+
     public ProfileManager getProfileManager() {
         return this.profileManager;
     }
-    
+
     public UUID getClientToken() {
         return this.clientToken;
     }
-    
+
     public void setClientToken(final UUID clientToken) {
         this.clientToken = clientToken;
     }
-    
+
     public ThreadPoolExecutor getDownloaderExecutorService() {
         return this.downloaderExecutorService;
     }

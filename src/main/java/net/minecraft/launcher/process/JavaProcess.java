@@ -1,5 +1,9 @@
 package net.minecraft.launcher.process;
 
+import com.google.common.base.Function;
+import com.google.common.collect.EvictingQueue;
+
+import java.util.Collection;
 import java.util.List;
 
 public class JavaProcess
@@ -7,16 +11,18 @@ public class JavaProcess
     private static final int MAX_SYSOUT_LINES = 5;
     private final List<String> commands;
     private final Process process;
-    private final LimitedCapacityList<String> sysOutLines;
+    private final Function<String, Boolean> sysOutFilter;
+    private final Collection<String> sysOutLines;
     private JavaProcessRunnable onExit;
     private ProcessMonitorThread monitor;
-    
-    public JavaProcess(final List<String> commands, final Process process) {
+
+    public JavaProcess(final List<String> commands, final Process process, final Function<String, Boolean> sysOutFilter) {
         super();
-        this.sysOutLines = new LimitedCapacityList<String>(String.class, 5);
+        this.sysOutLines = EvictingQueue.create(5);
         this.monitor = new ProcessMonitorThread(this);
         this.commands = commands;
         this.process = process;
+        this.sysOutFilter = sysOutFilter;
         this.monitor.start();
     }
     
@@ -31,9 +37,13 @@ public class JavaProcess
     public String getStartupCommand() {
         return this.process.toString();
     }
-    
-    public LimitedCapacityList<String> getSysOutLines() {
+
+    public Collection<String> getSysOutLines() {
         return this.sysOutLines;
+    }
+
+    public Function<String, Boolean> getSysOutFilter() {
+        return this.sysOutFilter;
     }
     
     public boolean isRunning() {

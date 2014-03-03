@@ -1,8 +1,8 @@
 package com.mojang.authlib.yggdrasil;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonParseException;
+import com.google.gson.*;
 import com.mojang.authlib.Agent;
+import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.HttpAuthenticationService;
 import com.mojang.authlib.UserAuthentication;
 import com.mojang.authlib.exceptions.AuthenticationException;
@@ -10,11 +10,13 @@ import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
 import com.mojang.authlib.exceptions.UserMigratedException;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
+import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.authlib.yggdrasil.response.Response;
 import net.minecraft.launcher.Launcher;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.Proxy;
 import java.net.URL;
 
@@ -25,8 +27,11 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService
     
     public YggdrasilAuthenticationService(final Proxy proxy, final String clientToken) {
         super(proxy);
-        this.gson = new Gson();
         this.clientToken = clientToken;
+        final GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(GameProfile.class, new GameProfileSerializer());
+        builder.registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer());
+        this.gson = builder.create();
     }
     
     @Override
@@ -101,5 +106,27 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService
     
     public String getClientToken() {
         return this.clientToken;
+    }
+
+    private static class GameProfileSerializer implements JsonSerializer<GameProfile>, JsonDeserializer<GameProfile> {
+        @Override
+        public GameProfile deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
+            final JsonObject object = (JsonObject) json;
+            final String id = object.has("id") ? object.getAsJsonPrimitive("id").getAsString() : null;
+            final String name = object.has("name") ? object.getAsJsonPrimitive("name").getAsString() : null;
+            return new GameProfile(id, name);
+        }
+
+        @Override
+        public JsonElement serialize(final GameProfile src, final Type typeOfSrc, final JsonSerializationContext context) {
+            final JsonObject result = new JsonObject();
+            if (src.getId() != null) {
+                result.addProperty("id", src.getId());
+            }
+            if (src.getName() != null) {
+                result.addProperty("name", src.getName());
+            }
+            return result;
+        }
     }
 }

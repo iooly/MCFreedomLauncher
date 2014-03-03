@@ -1,23 +1,16 @@
 package net.minecraft.launcher.versions;
 
-import java.net.MalformedURLException;
-import net.minecraft.launcher.updater.download.ChecksummedDownloadable;
-import java.net.URL;
-import net.minecraft.launcher.updater.download.Downloadable;
-import java.net.Proxy;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Map;
-import java.io.File;
 import net.minecraft.launcher.OperatingSystem;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Date;
+import net.minecraft.launcher.updater.download.ChecksummedDownloadable;
+import net.minecraft.launcher.updater.download.Downloadable;
 
-public class CompleteVersion implements Version
-{
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.Proxy;
+import java.net.URL;
+import java.util.*;
+
+public class CompleteVersion implements Version {
     private String id;
     private Date time;
     private Date releaseTime;
@@ -30,12 +23,12 @@ public class CompleteVersion implements Version
     private String assets;
     private List<Rule> rules;
     private transient boolean synced;
-    
+
     public CompleteVersion() {
         super();
         this.synced = false;
     }
-    
+
     public CompleteVersion(final String id, final Date releaseTime, final Date updateTime, final ReleaseType type, final String mainClass, final String minecraftArguments) {
         super();
         this.synced = false;
@@ -65,7 +58,7 @@ public class CompleteVersion implements Version
         this.libraries = new ArrayList<Library>();
         this.minecraftArguments = minecraftArguments;
     }
-    
+
     public CompleteVersion(final CompleteVersion version) {
         this(version.getId(), version.getReleaseTime(), version.getUpdatedTime(), version.getType(), version.getMainClass(), version.getMinecraftArguments());
         this.minimumLauncherVersion = version.minimumLauncherVersion;
@@ -74,39 +67,39 @@ public class CompleteVersion implements Version
             this.libraries.add(new Library(library));
         }
     }
-    
+
     public CompleteVersion(final Version version, final String mainClass, final String minecraftArguments) {
         this(version.getId(), version.getReleaseTime(), version.getUpdatedTime(), version.getType(), mainClass, minecraftArguments);
     }
-    
+
     @Override
     public String getId() {
         return this.id;
     }
-    
+
     @Override
     public ReleaseType getType() {
         return this.type;
     }
-    
+
     @Override
     public Date getUpdatedTime() {
         return this.time;
     }
-    
+
     @Override
     public Date getReleaseTime() {
         return this.releaseTime;
     }
-    
+
     public List<Library> getLibraries() {
         return this.libraries;
     }
-    
+
     public String getMainClass() {
         return this.mainClass;
     }
-    
+
     @Override
     public void setUpdatedTime(final Date time) {
         if (time == null) {
@@ -114,7 +107,7 @@ public class CompleteVersion implements Version
         }
         this.time = time;
     }
-    
+
     @Override
     public void setReleaseTime(final Date time) {
         if (time == null) {
@@ -122,7 +115,7 @@ public class CompleteVersion implements Version
         }
         this.releaseTime = time;
     }
-    
+
     @Override
     public void setType(final ReleaseType type) {
         if (type == null) {
@@ -130,14 +123,14 @@ public class CompleteVersion implements Version
         }
         this.type = type;
     }
-    
+
     public void setMainClass(final String mainClass) {
         if (mainClass == null || mainClass.length() == 0) {
             throw new IllegalArgumentException("Main class cannot be null or empty");
         }
         this.mainClass = mainClass;
     }
-    
+
     public Collection<Library> getRelevantLibraries() {
         final List<Library> result = new ArrayList<Library>();
         for (final Library library : this.libraries) {
@@ -147,7 +140,7 @@ public class CompleteVersion implements Version
         }
         return result;
     }
-    
+
     public Collection<File> getClassPath(final OperatingSystem os, final File base) {
         final Collection<Library> libraries = this.getRelevantLibraries();
         final Collection<File> result = new ArrayList<File>();
@@ -159,7 +152,7 @@ public class CompleteVersion implements Version
         result.add(new File(base, "versions/" + this.getId() + "/" + this.getId() + ".jar"));
         return result;
     }
-    
+
     public Collection<String> getExtractFiles(final OperatingSystem os) {
         final Collection<Library> libraries = this.getRelevantLibraries();
         final Collection<String> result = new ArrayList<String>();
@@ -171,35 +164,33 @@ public class CompleteVersion implements Version
         }
         return result;
     }
-    
+
     public Set<String> getRequiredFiles(final OperatingSystem os) {
         final Set<String> neededFiles = new HashSet<String>();
         for (final Library library : this.getRelevantLibraries()) {
             if (library.getNatives() != null) {
-                final String natives = (String)library.getNatives().get(os);
+                final String natives = library.getNatives().get(os);
                 if (natives == null) {
                     continue;
                 }
                 neededFiles.add("libraries/" + library.getArtifactPath(natives));
-            }
-            else {
+            } else {
                 neededFiles.add("libraries/" + library.getArtifactPath());
             }
         }
         return neededFiles;
     }
-    
+
     public Set<Downloadable> getRequiredDownloadables(final OperatingSystem os, final Proxy proxy, final File targetDirectory, final boolean ignoreLocalFiles) throws MalformedURLException {
         final Set<Downloadable> neededFiles = new HashSet<Downloadable>();
         for (final Library library : this.getRelevantLibraries()) {
             String file = null;
             if (library.getNatives() != null) {
-                final String natives = (String)library.getNatives().get(os);
+                final String natives = library.getNatives().get(os);
                 if (natives != null) {
                     file = library.getArtifactPath(natives);
                 }
-            }
-            else {
+            } else {
                 file = library.getArtifactPath();
             }
             if (file != null) {
@@ -213,31 +204,31 @@ public class CompleteVersion implements Version
         }
         return neededFiles;
     }
-    
+
     @Override
     public String toString() {
-        return "CompleteVersion{id='" + this.id + '\'' + ", time=" + this.time + ", type=" + this.type + ", libraries=" + this.libraries + ", mainClass='" + this.mainClass + '\'' + ", minimumLauncherVersion=" + this.minimumLauncherVersion + '}';
+        return "CompleteVersion{id='" + this.id + '\'' + ", updatedTime=" + this.time + ", releasedTime=" + this.time + ", type=" + this.type + ", libraries=" + this.libraries + ", mainClass='" + this.mainClass + '\'' + ", minimumLauncherVersion=" + this.minimumLauncherVersion + '}';
     }
-    
+
     public String getMinecraftArguments() {
         return this.minecraftArguments;
     }
-    
+
     public void setMinecraftArguments(final String minecraftArguments) {
         if (minecraftArguments == null) {
             throw new IllegalArgumentException("Process arguments cannot be null or empty");
         }
         this.minecraftArguments = minecraftArguments;
     }
-    
+
     public int getMinimumLauncherVersion() {
         return this.minimumLauncherVersion;
     }
-    
+
     public void setMinimumLauncherVersion(final int minimumLauncherVersion) {
         this.minimumLauncherVersion = minimumLauncherVersion;
     }
-    
+
     public boolean appliesToCurrentEnvironment() {
         if (this.rules == null) {
             return true;
@@ -251,27 +242,27 @@ public class CompleteVersion implements Version
         }
         return lastAction == Rule.Action.ALLOW;
     }
-    
+
     public void setIncompatibilityReason(final String incompatibilityReason) {
         this.incompatibilityReason = incompatibilityReason;
     }
-    
+
     public String getIncompatibilityReason() {
         return this.incompatibilityReason;
     }
-    
+
     public boolean isSynced() {
         return this.synced;
     }
-    
+
     public void setSynced(final boolean synced) {
         this.synced = synced;
     }
-    
+
     public String getAssets() {
         return this.assets;
     }
-    
+
     public void setAssets(final String assets) {
         this.assets = assets;
     }

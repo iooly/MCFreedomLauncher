@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.hopto.energy</groupId>
     <artifactId>MCFreedomLauncher</artifactId>
-    <version>1.3.8</version>
+    <version>1.3.10</version>
     <description>Minecraft Freedom Launcher-Free the New Minecraft Launcher with Energy!</description>
     <url>http://energy0124.github.io/MCFreedomLauncher/</url>
     <scm>
@@ -118,10 +118,10 @@
                                     <headerType>gui</headerType>
                                     <stayAlive>false</stayAlive>
                                     <jar>
-                                        F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.3.8.jar
+                                        F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.3.10.jar
                                     </jar>
                                     <outfile>
-                                        F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.3.8.exe
+                                        F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.3.10.exe
                                     </outfile>
                                     <classPath>
                                         <mainClass>org.hopto.energy.Main</mainClass>
@@ -166,7 +166,7 @@
                                 </goals>
                                 <configuration>
                                     <bundleName>${project.name}</bundleName>
-                                    <version>1.3.8</version>
+                                    <version>1.3.10</version>
                                     <internetEnable>true</internetEnable>
                                     <mainClass>org.hopto.org.hopto.energy.Main</mainClass>
                                     <javaApplicationStub>
@@ -174,10 +174,10 @@
                                     </javaApplicationStub>
                                     <jvmVersion>1.6+</jvmVersion>
                                     <zipFile>
-                                        F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.3.8.app.zip
+                                        F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.3.10.app.zip
                                     </zipFile>
                                     <diskImageFile>
-                                        F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.3.8.dmg
+                                        F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.3.10.dmg
                                     </diskImageFile>
                                     <iconFile>icon.icns</iconFile>
                                 </configuration>
@@ -185,7 +185,7 @@
                         </executions>
                         <configuration>
                             <bundleName>${project.name}</bundleName>
-                            <version>1.3.8</version>
+                            <version>1.3.10</version>
                             <internetEnable>true</internetEnable>
                             <mainClass>org.hopto.org.hopto.energy.Main</mainClass>
                             <javaApplicationStub>
@@ -193,10 +193,10 @@
                             </javaApplicationStub>
                             <jvmVersion>1.6+</jvmVersion>
                             <zipFile>
-                                F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.3.8.app.zip
+                                F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.3.10.app.zip
                             </zipFile>
                             <diskImageFile>
-                                F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.3.8.dmg
+                                F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.3.10.dmg
                             </diskImageFile>
                             <iconFile>icon.icns</iconFile>
                         </configuration>

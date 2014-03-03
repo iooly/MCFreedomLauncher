@@ -27,8 +27,7 @@ import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class VersionManager
-{
+public class VersionManager {
     private static final Logger LOGGER;
     private final VersionList localVersionList;
     private final VersionList remoteVersionList;
@@ -37,17 +36,17 @@ public class VersionManager
     private final Object refreshLock;
     private boolean isRefreshing;
     private final Gson gson;
-    
+
     public VersionManager(final VersionList localVersionList, final VersionList remoteVersionList) {
         super();
         this.executorService = new ExceptionalThreadPoolExecutor(4, 8, 30L, TimeUnit.SECONDS);
-        this.refreshedVersionsListeners = Collections.synchronizedList(new ArrayList<RefreshedVersionsListener>());
+        this.refreshedVersionsListeners = Collections.<RefreshedVersionsListener>synchronizedList(new ArrayList<RefreshedVersionsListener>());
         this.refreshLock = new Object();
         this.gson = new Gson();
         this.localVersionList = localVersionList;
         this.remoteVersionList = remoteVersionList;
     }
-    
+
     public void refreshVersions() throws IOException {
         synchronized (this.refreshLock) {
             this.isRefreshing = true;
@@ -57,8 +56,7 @@ public class VersionManager
             this.localVersionList.refreshVersions();
             VersionManager.LOGGER.info("Refreshing remote version list...");
             this.remoteVersionList.refreshVersions();
-        }
-        catch (IOException ex) {
+        } catch (IOException ex) {
             synchronized (this.refreshLock) {
                 this.isRefreshing = false;
             }
@@ -71,7 +69,7 @@ public class VersionManager
         final List<RefreshedVersionsListener> listeners = new ArrayList<RefreshedVersionsListener>(this.refreshedVersionsListeners);
         final Iterator<RefreshedVersionsListener> iterator = listeners.iterator();
         while (iterator.hasNext()) {
-            final RefreshedVersionsListener listener = (RefreshedVersionsListener)iterator.next();
+            final RefreshedVersionsListener listener = (RefreshedVersionsListener) iterator.next();
             if (!listener.shouldReceiveEventsInUIThread()) {
                 listener.onVersionsRefreshed(this);
                 iterator.remove();
@@ -88,11 +86,11 @@ public class VersionManager
             });
         }
     }
-    
+
     public List<VersionSyncInfo> getVersions() {
         return this.getVersions(null);
     }
-    
+
     public List<VersionSyncInfo> getVersions(final VersionFilter filter) {
         synchronized (this.refreshLock) {
             if (this.isRefreshing) {
@@ -174,15 +172,15 @@ public class VersionManager
         });
         return result;
     }
-    
+
     public VersionSyncInfo getVersionSyncInfo(final Version version) {
         return this.getVersionSyncInfo(version.getId());
     }
-    
+
     public VersionSyncInfo getVersionSyncInfo(final String name) {
         return this.getVersionSyncInfo(this.localVersionList.getVersion(name), this.remoteVersionList.getVersion(name));
     }
-    
+
     public VersionSyncInfo getVersionSyncInfo(final Version localVersion, final Version remoteVersion) {
         boolean upToDate;
         final boolean installed = upToDate = (localVersion != null);
@@ -190,11 +188,11 @@ public class VersionManager
             upToDate = !remoteVersion.getUpdatedTime().after(localVersion.getUpdatedTime());
         }
         if (localVersion instanceof CompleteVersion) {
-            upToDate &= this.localVersionList.hasAllFiles((CompleteVersion)localVersion, OperatingSystem.getCurrentPlatform());
+            upToDate &= this.localVersionList.hasAllFiles((CompleteVersion) localVersion, OperatingSystem.getCurrentPlatform());
         }
         return new VersionSyncInfo(localVersion, remoteVersion, installed, upToDate);
     }
-    
+
     public List<VersionSyncInfo> getInstalledVersions() {
         final List<VersionSyncInfo> result = new ArrayList<VersionSyncInfo>();
         for (final Version version : this.localVersionList.getVersions()) {
@@ -208,15 +206,15 @@ public class VersionManager
         }
         return result;
     }
-    
+
     public VersionList getRemoteVersionList() {
         return this.remoteVersionList;
     }
-    
+
     public VersionList getLocalVersionList() {
         return this.localVersionList;
     }
-    
+
     public CompleteVersion getLatestCompleteVersion(final VersionSyncInfo syncInfo) throws IOException {
         if (syncInfo.getLatestSource() != VersionSyncInfo.VersionSource.REMOTE) {
             return this.localVersionList.getCompleteVersion(syncInfo.getLatestVersion());
@@ -225,20 +223,19 @@ public class VersionManager
         IOException exception = null;
         try {
             result = this.remoteVersionList.getCompleteVersion(syncInfo.getLatestVersion());
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             exception = e;
             try {
                 result = this.localVersionList.getCompleteVersion(syncInfo.getLatestVersion());
+            } catch (IOException ex) {
             }
-            catch (IOException ex) {}
         }
         if (result != null) {
             return result;
         }
         throw exception;
     }
-    
+
     public DownloadJob downloadVersion(final VersionSyncInfo syncInfo, final DownloadJob job) throws IOException {
         if (!(this.localVersionList instanceof LocalVersionList)) {
             throw new IllegalArgumentException("Cannot download if local repo isn't a LocalVersionList");
@@ -247,20 +244,20 @@ public class VersionManager
             throw new IllegalArgumentException("Cannot download if local repo isn't a RemoteVersionList");
         }
         final CompleteVersion version = this.getLatestCompleteVersion(syncInfo);
-        final File baseDirectory = ((LocalVersionList)this.localVersionList).getBaseDirectory();
-        final Proxy proxy = ((RemoteVersionList)this.remoteVersionList).getProxy();
+        final File baseDirectory = ((LocalVersionList) this.localVersionList).getBaseDirectory();
+        final Proxy proxy = ((RemoteVersionList) this.remoteVersionList).getProxy();
         job.addDownloadables(version.getRequiredDownloadables(OperatingSystem.getCurrentPlatform(), proxy, baseDirectory, false));
         final String jarFile = "versions/" + version.getId() + "/" + version.getId() + ".jar";
         job.addDownloadables(new EtagDownloadable(proxy, new URL(LauncherConstants.URL_DOWNLOAD_BASE + jarFile), new File(baseDirectory, jarFile), false));
         return job;
     }
-    
+
     public DownloadJob downloadResources(final DownloadJob job, final CompleteVersion version) throws IOException {
-        final File baseDirectory = ((LocalVersionList)this.localVersionList).getBaseDirectory();
-        job.addDownloadables(this.getResourceFiles(((RemoteVersionList)this.remoteVersionList).getProxy(), baseDirectory, version));
+        final File baseDirectory = ((LocalVersionList) this.localVersionList).getBaseDirectory();
+        job.addDownloadables(this.getResourceFiles(((RemoteVersionList) this.remoteVersionList).getProxy(), baseDirectory, version));
         return job;
     }
-    
+
     private Set<Downloadable> getResourceFiles(final Proxy proxy, final File baseDirectory, final CompleteVersion version) {
         final Set<Downloadable> result = new HashSet<Downloadable>();
         InputStream inputStream = null;
@@ -278,12 +275,12 @@ public class VersionManager
             inputStream = indexUrl.openConnection(proxy).getInputStream();
             final String json = IOUtils.toString(inputStream);
             FileUtils.writeStringToFile(indexFile, json);
-            final AssetIndex index = (AssetIndex)this.gson.<AssetIndex>fromJson(json, AssetIndex.class);
+            final AssetIndex index = (AssetIndex) this.gson.<AssetIndex>fromJson(json, AssetIndex.class);
             for (final AssetIndex.AssetObject object : index.getUniqueObjects()) {
                 final String filename = object.getHash().substring(0, 2) + "/" + object.getHash();
                 final File file = new File(objectsFolder, filename);
                 if (!file.isFile() || FileUtils.sizeOf(file) != object.getSize()) {
-                    final Downloadable downloadable = new AssetDownloadable(proxy, new URL( LauncherConstants.URL_RESOURCE_BASE+ filename), file, false, object.getHash(), object.getSize());
+                    final Downloadable downloadable = new AssetDownloadable(proxy, new URL(LauncherConstants.URL_RESOURCE_BASE + filename), file, false, object.getHash(), object.getSize());
                     downloadable.setExpectedSize(object.getSize());
                     result.add(downloadable);
                 }
@@ -291,28 +288,26 @@ public class VersionManager
             final long end = System.nanoTime();
             final long delta = end - start;
             VersionManager.LOGGER.debug("Delta time to compare resources: " + delta / 1000000L + " ms ");
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             VersionManager.LOGGER.error("Couldn't download resources", ex);
-        }
-        finally {
+        } finally {
             IOUtils.closeQuietly(inputStream);
         }
         return result;
     }
-    
+
     public ThreadPoolExecutor getExecutorService() {
         return this.executorService;
     }
-    
+
     public void addRefreshedVersionsListener(final RefreshedVersionsListener listener) {
         this.refreshedVersionsListeners.add(listener);
     }
-    
+
     public void removeRefreshedVersionsListener(final RefreshedVersionsListener listener) {
         this.refreshedVersionsListeners.remove(listener);
     }
-    
+
     static {
         LOGGER = LogManager.getLogger();
     }
