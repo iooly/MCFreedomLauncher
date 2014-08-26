@@ -1,61 +1,81 @@
 package net.minecraft.launcher.ui.tabs;
 
 import java.awt.Component;
-import net.minecraft.launcher.Launcher;
 import javax.swing.JTabbedPane;
+import net.minecraft.launcher.Launcher;
 
-public class LauncherTabPanel extends JTabbedPane
+public class LauncherTabPanel
+  extends JTabbedPane
 {
-    private final Launcher launcher;
-    private final WebsiteTab blog;
-    private final ConsoleTab console;
-    private CrashReportTab crashReportTab;
+  private final Launcher minecraftLauncher;
+  private final WebsiteTab blog;
+  private final ConsoleTab console;
+  private CrashReportTab crashReportTab;
+  
+  public LauncherTabPanel(Launcher minecraftLauncher)
+  {
+    super(1);
     
-    public LauncherTabPanel(final Launcher launcher) {
-        super(1);
-        this.launcher = launcher;
-        this.blog = new WebsiteTab(launcher);
-        this.console = new ConsoleTab(launcher);
-        this.createInterface();
-    }
+    this.minecraftLauncher = minecraftLauncher;
+    this.blog = new WebsiteTab(minecraftLauncher);
+    this.console = new ConsoleTab(minecraftLauncher);
     
-    protected void createInterface() {
-        this.addTab("Update Notes", this.blog);
-        this.addTab("Development Console", this.console);
-        this.addTab("Profile Editor", new ProfileListTab(this.launcher));
-        this.addTab("Local Version Editor (NYI)", new VersionListTab(this.launcher));
+    createInterface();
+  }
+  
+  protected void createInterface()
+  {
+    addTab("Update Notes", this.blog);
+    addTab("Launcher Log", this.console);
+    addTab("Profile Editor", new ProfileListTab(this.minecraftLauncher));
+  }
+  
+  public Launcher getMinecraftLauncher()
+  {
+    return this.minecraftLauncher;
+  }
+  
+  public WebsiteTab getBlog()
+  {
+    return this.blog;
+  }
+  
+  public ConsoleTab getConsole()
+  {
+    return this.console;
+  }
+  
+  public void showConsole()
+  {
+    setSelectedComponent(this.console);
+  }
+  
+  public void setCrashReport(CrashReportTab newTab)
+  {
+    if (this.crashReportTab != null) {
+      removeTab(this.crashReportTab);
     }
-    
-    public Launcher getLauncher() {
-        return this.launcher;
+    this.crashReportTab = newTab;
+    addTab("Crash Report", this.crashReportTab);
+    setSelectedComponent(newTab);
+  }
+  
+  protected void removeTab(Component tab)
+  {
+    for (int i = 0; i < getTabCount(); i++) {
+      if (getTabComponentAt(i) == tab)
+      {
+        removeTabAt(i);
+        break;
+      }
     }
-    
-    public WebsiteTab getBlog() {
-        return this.blog;
+  }
+  
+  public void removeTab(String name)
+  {
+    int index = indexOfTab(name);
+    if (index > -1) {
+      removeTabAt(index);
     }
-    
-    public ConsoleTab getConsole() {
-        return this.console;
-    }
-    
-    public void showConsole() {
-        this.setSelectedComponent(this.console);
-    }
-    
-    public void setCrashReport(final CrashReportTab newTab) {
-        if (this.crashReportTab != null) {
-            this.removeTab(this.crashReportTab);
-        }
-        this.addTab("Crash Report", this.crashReportTab = newTab);
-        this.setSelectedComponent(newTab);
-    }
-    
-    protected void removeTab(final Component tab) {
-        for (int i = 0; i < this.getTabCount(); ++i) {
-            if (this.getTabComponentAt(i) == tab) {
-                this.removeTabAt(i);
-                break;
-            }
-        }
-    }
+  }
 }
