@@ -1,71 +1,115 @@
 package net.minecraft.launcher.ui.tabs;
 
-import org.apache.logging.log4j.LogManager;
-import java.net.URL;
+import java.awt.BorderLayout;
 import java.awt.Component;
-import net.minecraft.launcher.OperatingSystem;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-import java.awt.Color;
-import java.awt.Insets;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.beans.IntrospectionException;
+import java.io.File;
+import java.lang.reflect.Method;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
+import javax.swing.JPanel;
 import net.minecraft.launcher.Launcher;
-import javax.swing.JTextPane;
+import net.minecraft.launcher.ui.tabs.website.Browser;
+import net.minecraft.launcher.ui.tabs.website.JFXBrowser;
+import net.minecraft.launcher.ui.tabs.website.LegacySwingBrowser;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import javax.swing.JScrollPane;
 
-public class WebsiteTab extends JScrollPane
+public class WebsiteTab
+  extends JPanel
 {
-    private static final Logger LOGGER;
-    private final JTextPane blog;
-    private final Launcher launcher;
+  private static final Logger LOGGER;
+  private final Browser browser = selectBrowser();
+  private final Launcher minecraftLauncher;
+  
+  public WebsiteTab(Launcher minecraftLauncher)
+  {
+    this.minecraftLauncher = minecraftLauncher;
     
-    public WebsiteTab(final Launcher launcher) {
-        super();
-        this.blog = new JTextPane();
-        this.launcher = launcher;
-        this.blog.setEditable(false);
-        this.blog.setMargin(null);
-        this.blog.setBackground(Color.DARK_GRAY);
-        this.blog.setContentType("text/html");
-        this.blog.setText("<html><body><font color=\"#808080\"><br><br><br><br><br><br><br><center><h1>Loading page..</h1></center></font></body></html>");
-        this.blog.addHyperlinkListener(new HyperlinkListener() {
-            @Override
-            public void hyperlinkUpdate(final HyperlinkEvent he) {
-                if (he.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                    try {
-                        OperatingSystem.openLink(he.getURL().toURI());
-                    }
-                    catch (Exception e) {
-                        WebsiteTab.LOGGER.error("Unexpected exception opening link " + he.getURL(), e);
-                    }
-                }
-            }
-        });
-        this.setViewportView(this.blog);
-    }
+    setLayout(new BorderLayout());
+    add(this.browser.getComponent(), "Center");
+    this.browser.resize(getSize());
     
-    public void setPage(final String url) {
-        final Thread thread = new Thread("Update website tab") {
-            @Override
-            public void run() {
-                try {
-                    WebsiteTab.this.blog.setPage(new URL(url));
-                }
-                catch (Exception e) {
-                    WebsiteTab.LOGGER.error("Unexpected exception loading " + url, e);
-                    WebsiteTab.this.blog.setText("<html><body><font color=\"#808080\"><br><br><br><br><br><br><br><center><h1>Failed to get page</h1><br>" + e.toString() + "</center></font></body></html>");
-                }
-            }
-        };
-        thread.setDaemon(true);
-        thread.start();
+    addComponentListener(new ComponentAdapter()
+    {
+      public void componentResized(ComponentEvent e)
+      {
+        WebsiteTab.this.browser.resize(e.getComponent().getSize());
+      }
+    });
+  }
+  
+  private Browser selectBrowser()
+  {
+    if (hasJFX())
+    {
+      LOGGER.info("JFX is already initialized");
+      return new JFXBrowser();
     }
-    
-    public Launcher getLauncher() {
-        return this.launcher;
+    File jfxrt = new File(System.getProperty("java.home"), "lib/jfxrt.jar");
+    if (jfxrt.isFile())
+    {
+      LOGGER.debug("Attempting to load {}...", jfxrt);
+      try
+      {
+        addToSystemClassLoader(jfxrt);
+        
+        LOGGER.info("JFX has been detected & successfully loaded");
+        return new JFXBrowser();
+      }
+      catch (Throwable e)
+      {
+        LOGGER.debug("JFX has been detected but unsuccessfully loaded", e);
+        return new LegacySwingBrowser();
+      }
     }
-    
-    static {
-        LOGGER = LogManager.getLogger();
+    LOGGER.debug("JFX was not found at {}", jfxrt );
+    return new LegacySwingBrowser();
+  }
+  
+  public void setPage(String url)
+  {
+    this.browser.loadUrl(url);
+  }
+  
+  public Launcher getMinecraftLauncher()
+  {
+    return this.minecraftLauncher;
+  }
+  
+  public static void addToSystemClassLoader(File file)
+    throws IntrospectionException
+  {
+    if ((ClassLoader.getSystemClassLoader() instanceof URLClassLoader))
+    {
+      URLClassLoader classLoader = (URLClassLoader)ClassLoader.getSystemClassLoader();
+      try
+      {
+        Method method = URLClassLoader.class.getDeclaredMethod("addURL", new Class[] { URL.class });
+        method.setAccessible(true);
+        method.invoke(classLoader, file.toURI().toURL());
+      }
+      catch (Throwable t)
+      {
+        LOGGER.warn("Couldn't add " + file + " to system classloader", t);
+      }
     }
+  }
+  
+  public boolean hasJFX()
+  {
+    try
+    {
+      getClass().getClassLoader().loadClass("javafx.embed.swing.JFXPanel");
+      return true;
+    }
+    catch (ClassNotFoundException e) {}
+    return false;
+  }
+  static {
+      LOGGER = LogManager.getLogger();
+  }
 }

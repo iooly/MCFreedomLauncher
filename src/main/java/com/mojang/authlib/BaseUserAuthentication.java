@@ -2,6 +2,7 @@ package com.mojang.authlib;
 
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
+import com.mojang.util.UUIDTypeAdapter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.LogManager;
@@ -12,236 +13,265 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class BaseUserAuthentication implements UserAuthentication {
-    private static final Logger LOGGER;
-    protected static final String STORAGE_KEY_PROFILE_NAME = "displayName";
-    protected static final String STORAGE_KEY_PROFILE_ID = "uuid";
-    protected static final String STORAGE_KEY_PROFILE_PROPERTIES = "profileProperties";
-    protected static final String STORAGE_KEY_USER_NAME = "username";
-    protected static final String STORAGE_KEY_USER_ID = "userid";
-    protected static final String STORAGE_KEY_USER_PROPERTIES = "userProperties";
-    private final AuthenticationService authenticationService;
-    private final PropertyMap userProperties;
-    private String userid;
-    private String username;
-    private String password;
-    private GameProfile selectedProfile;
-    private UserType userType;
-
-    protected BaseUserAuthentication(final AuthenticationService authenticationService) {
-        super();
-        this.userProperties = new PropertyMap();
-        Validate.<AuthenticationService>notNull(authenticationService);
-        this.authenticationService = authenticationService;
+public abstract class BaseUserAuthentication implements UserAuthentication
+{
+  private static final Logger LOGGER;
+  protected static final String STORAGE_KEY_PROFILE_NAME = "displayName";
+  protected static final String STORAGE_KEY_PROFILE_ID = "uuid";
+  protected static final String STORAGE_KEY_PROFILE_PROPERTIES = "profileProperties";
+  protected static final String STORAGE_KEY_USER_NAME = "username";
+  protected static final String STORAGE_KEY_USER_ID = "userid";
+  protected static final String STORAGE_KEY_USER_PROPERTIES = "userProperties";
+  private final AuthenticationService authenticationService;
+  private final PropertyMap userProperties = new PropertyMap();
+  private String userid;
+  private String username;
+  private String password;
+  private GameProfile selectedProfile;
+  private UserType userType;
+  
+  protected BaseUserAuthentication(AuthenticationService authenticationService)
+  {
+    Validate.notNull(authenticationService);
+    this.authenticationService = authenticationService;
+  }
+  
+  public boolean canLogIn()
+  {
+    return (!canPlayOnline()) && (StringUtils.isNotBlank(getUsername())) && (StringUtils.isNotBlank(getPassword()));
+  }
+  
+  public void logOut()
+  {
+    this.password = null;
+    this.userid = null;
+    setSelectedProfile(null);
+    getModifiableUserProperties().clear();
+    setUserType(null);
+  }
+  
+  public boolean isLoggedIn()
+  {
+    return getSelectedProfile() != null;
+  }
+  
+  public void setUsername(String username)
+  {
+    if ((isLoggedIn()) && (canPlayOnline())) {
+      throw new IllegalStateException("Cannot change username whilst logged in & online");
     }
-
-    @Override
-    public boolean canLogIn() {
-        return !this.canPlayOnline() && StringUtils.isNotBlank(this.getUsername()) && StringUtils.isNotBlank(this.getPassword());
+    this.username = username;
+  }
+  
+  public void setPassword(String password)
+  {
+    if ((isLoggedIn()) && (canPlayOnline()) && (StringUtils.isNotBlank(password))) {
+      throw new IllegalStateException("Cannot set password whilst logged in & online");
     }
-
-    @Override
-    public void logOut() {
-        this.password = null;
-        this.userid = null;
-        this.setSelectedProfile(null);
-        this.getModifiableUserProperties().clear();
-        this.setUserType(null);
+    this.password = password;
+  }
+  
+  protected String getUsername()
+  {
+    return this.username;
+  }
+  
+  protected String getPassword()
+  {
+    return this.password;
+  }
+  
+  public void loadFromStorage(Map<String, Object> credentials)
+  {
+    logOut();
+    
+    setUsername(String.valueOf(credentials.get("username")));
+    if (credentials.containsKey("userid")) {
+      this.userid = String.valueOf(credentials.get("userid"));
+    } else {
+      this.userid = this.username;
     }
-
-    @Override
-    public boolean isLoggedIn() {
-        return this.getSelectedProfile() != null;
-    }
-
-    @Override
-    public void setUsername(final String username) {
-        if (this.isLoggedIn() && this.canPlayOnline()) {
-            throw new IllegalStateException("Cannot change username whilst logged in & online");
+    if (credentials.containsKey("userProperties")) {
+      try
+      {
+        List<Map<String, String>> list = (List)credentials.get("userProperties");
+        for (Map<String, String> propertyMap : list)
+        {
+          String name = (String)propertyMap.get("name");
+          String value = (String)propertyMap.get("value");
+          String signature = (String)propertyMap.get("signature");
+          if (signature == null) {
+            getModifiableUserProperties().put(name, new Property(name, value));
+          } else {
+            getModifiableUserProperties().put(name, new Property(name, value, signature));
+          }
         }
-        this.username = username;
+      }
+      catch (Throwable t)
+      {
+        LOGGER.warn("Couldn't deserialize user properties", t);
+      }
     }
-
-    @Override
-    public void setPassword(final String password) {
-        if (this.isLoggedIn() && this.canPlayOnline() && StringUtils.isNotBlank(password)) {
-            throw new IllegalStateException("Cannot set password whilst logged in & online");
+    if ((credentials.containsKey("displayName")) && (credentials.containsKey("uuid")))
+    {
+      GameProfile profile = new GameProfile(UUIDTypeAdapter.fromString(String.valueOf(credentials.get("uuid"))), String.valueOf(credentials.get("displayName")));
+      if (credentials.containsKey("profileProperties")) {
+        try
+        {
+          List<Map<String, String>> list = (List)credentials.get("profileProperties");
+          for (Map<String, String> propertyMap : list)
+          {
+            String name = (String)propertyMap.get("name");
+            String value = (String)propertyMap.get("value");
+            String signature = (String)propertyMap.get("signature");
+            if (signature == null) {
+              profile.getProperties().put(name, new Property(name, value));
+            } else {
+              profile.getProperties().put(name, new Property(name, value, signature));
+            }
+          }
         }
-        this.password = password;
+        catch (Throwable t)
+        {
+          LOGGER.warn("Couldn't deserialize profile properties", t);
+        }
+      }
+      setSelectedProfile(profile);
     }
-
-    protected String getUsername() {
-        return this.username;
+  }
+  
+  public Map<String, Object> saveForStorage()
+  {
+    Map<String, Object> result = new HashMap();
+    if (getUsername() != null) {
+      result.put("username", getUsername());
     }
-
-    protected String getPassword() {
-        return this.password;
+    if (getUserID() != null) {
+      result.put("userid", getUserID());
+    } else if (getUsername() != null) {
+      result.put("username", getUsername());
     }
-
-    @Override
-    public void loadFromStorage(final Map<String, Object> credentials) {
-        this.logOut();
-        this.setUsername(String.valueOf(credentials.get("username")));
-        if (credentials.containsKey("userid")) {
-            this.userid = String.valueOf(credentials.get("userid"));
+    if (!getUserProperties().isEmpty())
+    {
+      List<Map<String, String>> properties = new ArrayList();
+      for (Property userProperty : getUserProperties().values())
+      {
+        Map<String, String> property = new HashMap();
+        property.put("name", userProperty.getName());
+        property.put("value", userProperty.getValue());
+        property.put("signature", userProperty.getSignature());
+        properties.add(property);
+      }
+      result.put("userProperties", properties);
+    }
+    GameProfile selectedProfile = getSelectedProfile();
+    if (selectedProfile != null)
+    {
+      result.put("displayName", selectedProfile.getName());
+      result.put("uuid", selectedProfile.getId());
+      
+      List<Map<String, String>> properties = new ArrayList();
+      for (Property profileProperty : selectedProfile.getProperties().values())
+      {
+        Map<String, String> property = new HashMap();
+        property.put("name", profileProperty.getName());
+        property.put("value", profileProperty.getValue());
+        property.put("signature", profileProperty.getSignature());
+        properties.add(property);
+      }
+      if (!properties.isEmpty()) {
+        result.put("profileProperties", properties);
+      }
+    }
+    return result;
+  }
+  
+  protected void setSelectedProfile(GameProfile selectedProfile)
+  {
+    this.selectedProfile = selectedProfile;
+  }
+  
+  public GameProfile getSelectedProfile()
+  {
+    return this.selectedProfile;
+  }
+  
+  public String toString()
+  {
+    StringBuilder result = new StringBuilder();
+    
+    result.append(getClass().getSimpleName());
+    result.append("{");
+    if (isLoggedIn())
+    {
+      result.append("Logged in as ");
+      result.append(getUsername());
+      if (getSelectedProfile() != null)
+      {
+        result.append(" / ");
+        result.append(getSelectedProfile());
+        result.append(" - ");
+        if (canPlayOnline()) {
+          result.append("Online");
         } else {
-            this.userid = this.username;
+          result.append("Offline");
         }
-        if (credentials.containsKey("userProperties")) {
-            try {
-                final List<Map<String, String>> list = (List<Map<String, String>>) credentials.get("userProperties");
-                for (final Map<String, String> propertyMap : list) {
-                    final String name = propertyMap.get("name");
-                    final String value = propertyMap.get("value");
-                    final String signature = propertyMap.get("signature");
-                    if (signature == null) {
-                        this.getModifiableUserProperties().put(name, new Property(name, value));
-                    } else {
-                        this.getModifiableUserProperties().put(name, new Property(name, value, signature));
-                    }
-                }
-            } catch (Throwable t) {
-                BaseUserAuthentication.LOGGER.warn("Couldn't deserialize user properties", t);
-            }
-        }
-        if (credentials.containsKey("displayName") && credentials.containsKey("uuid")) {
-            final GameProfile profile = new GameProfile(String.valueOf(credentials.get("uuid")), String.valueOf(credentials.get("displayName")));
-            if (credentials.containsKey("profileProperties")) {
-                try {
-                    final List<Map<String, String>> list2 = (List<Map<String, String>>) credentials.get("profileProperties");
-                    for (final Map<String, String> propertyMap2 : list2) {
-                        final String name2 = propertyMap2.get("name");
-                        final String value2 = propertyMap2.get("value");
-                        final String signature2 = propertyMap2.get("signature");
-                        if (signature2 == null) {
-                            profile.getProperties().put(name2, new Property(name2, value2));
-                        } else {
-                            profile.getProperties().put(name2, new Property(name2, value2, signature2));
-                        }
-                    }
-                } catch (Throwable t2) {
-                    BaseUserAuthentication.LOGGER.warn("Couldn't deserialize profile properties", t2);
-                }
-            }
-            this.setSelectedProfile(profile);
-        }
+      }
     }
-
-    @Override
-    public Map<String, Object> saveForStorage() {
-        final Map<String, Object> result = new HashMap<String, Object>();
-        if (this.getUsername() != null) {
-            result.put("username", this.getUsername());
-        }
-        if (this.getUserID() != null) {
-            result.put("userid", this.getUserID());
-        } else if (this.getUsername() != null) {
-            result.put("username", this.getUsername());
-        }
-        if (!this.getUserProperties().isEmpty()) {
-            final List<Map<String, String>> properties = new ArrayList<Map<String, String>>();
-            for (final Property userProperty : this.getUserProperties().values()) {
-                final Map<String, String> property = new HashMap<String, String>();
-                property.put("name", userProperty.getName());
-                property.put("value", userProperty.getValue());
-                property.put("signature", userProperty.getSignature());
-                properties.add(property);
-            }
-            result.put("userProperties", properties);
-        }
-        final GameProfile selectedProfile = this.getSelectedProfile();
-        if (selectedProfile != null) {
-            result.put("displayName", selectedProfile.getName());
-            result.put("uuid", selectedProfile.getId());
-            final List<Map<String, String>> properties2 = new ArrayList<Map<String, String>>();
-            for (final Property profileProperty : (selectedProfile.getProperties()).values()) {
-                final Map<String, String> property2 = new HashMap<String, String>();
-                property2.put("name", profileProperty.getName());
-                property2.put("value", profileProperty.getValue());
-                property2.put("signature", profileProperty.getSignature());
-                properties2.add(property2);
-            }
-            if (!properties2.isEmpty()) {
-                result.put("profileProperties", properties2);
-            }
-        }
-        return result;
+    else
+    {
+      result.append("Not logged in");
     }
-
-    protected void setSelectedProfile(final GameProfile selectedProfile) {
-        this.selectedProfile = selectedProfile;
+    result.append("}");
+    
+    return result.toString();
+  }
+  
+  public AuthenticationService getAuthenticationService()
+  {
+    return this.authenticationService;
+  }
+  
+  public String getUserID()
+  {
+    return this.userid;
+  }
+  
+  public PropertyMap getUserProperties()
+  {
+    if (isLoggedIn())
+    {
+      PropertyMap result = new PropertyMap();
+      result.putAll(getModifiableUserProperties());
+      return result;
     }
-
-    @Override
-    public GameProfile getSelectedProfile() {
-        return this.selectedProfile;
+    return new PropertyMap();
+  }
+  
+  protected PropertyMap getModifiableUserProperties()
+  {
+    return this.userProperties;
+  }
+  
+  public UserType getUserType()
+  {
+    if (isLoggedIn()) {
+      return this.userType == null ? UserType.LEGACY : this.userType;
     }
-
-    @Override
-    public String toString() {
-        final StringBuilder result = new StringBuilder();
-        result.append(this.getClass().getSimpleName());
-        result.append("{");
-        if (this.isLoggedIn()) {
-            result.append("Logged in as ");
-            result.append(this.getUsername());
-            if (this.getSelectedProfile() != null) {
-                result.append(" / ");
-                result.append(this.getSelectedProfile());
-                result.append(" - ");
-                if (this.canPlayOnline()) {
-                    result.append("Online");
-                } else {
-                    result.append("Offline");
-                }
-            }
-        } else {
-            result.append("Not logged in");
-        }
-        result.append("}");
-        return result.toString();
-    }
-
-    public AuthenticationService getAuthenticationService() {
-        return this.authenticationService;
-    }
-
-    @Override
-    public String getUserID() {
-        return this.userid;
-    }
-
-    @Override
-    public PropertyMap getUserProperties() {
-        if (this.isLoggedIn()) {
-            final PropertyMap result = new PropertyMap();
-            result.putAll(this.getModifiableUserProperties());
-            return result;
-        }
-        return new PropertyMap();
-    }
-
-    protected PropertyMap getModifiableUserProperties() {
-        return this.userProperties;
-    }
-
-    @Override
-    public UserType getUserType() {
-        if (this.isLoggedIn()) {
-            return (this.userType == null) ? UserType.LEGACY : this.userType;
-        }
-        return null;
-    }
-
-    protected void setUserType(final UserType userType) {
-        this.userType = userType;
-    }
-
-    protected void setUserid(final String userid) {
-        this.userid = userid;
-    }
-
-    static {
-        LOGGER = LogManager.getLogger();
-    }
+    return null;
+  }
+  
+  protected void setUserType(UserType userType)
+  {
+    this.userType = userType;
+  }
+  
+  protected void setUserid(String userid)
+  {
+    this.userid = userid;
+  }
+  
+  static {
+      LOGGER = LogManager.getLogger();
+  }
 }

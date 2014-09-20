@@ -1,34 +1,39 @@
 package net.minecraft.launcher.ui.bottombar;
 
 import java.awt.Component;
-import java.awt.LayoutManager;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import javax.swing.JPanel;
 
-public abstract class SidebarGridForm extends JPanel
+public abstract class SidebarGridForm
+  extends JPanel
 {
-    protected void createInterface() {
-        final GridBagLayout layout = new GridBagLayout();
-        final GridBagConstraints constraints = new GridBagConstraints();
-        this.setLayout(layout);
-        this.populateGrid(constraints);
-    }
+  protected void createInterface()
+  {
+    GridBagLayout layout = new GridBagLayout();
+    GridBagConstraints constraints = new GridBagConstraints();
+    setLayout(layout);
     
-    protected abstract void populateGrid(final GridBagConstraints p0);
+    populateGrid(constraints);
+  }
+  
+  protected abstract void populateGrid(GridBagConstraints paramGridBagConstraints);
+  
+  protected <T extends Component> T add(T component, GridBagConstraints constraints, int x, int y, int weight, int width)
+  {
+    return add(component, constraints, x, y, weight, width, 10);
+  }
+  
+  protected <T extends Component> T add(T component, GridBagConstraints constraints, int x, int y, int weight, int width, int anchor)
+  {
+    constraints.gridx = x;
+    constraints.gridy = y;
+    constraints.weightx = weight;
+    constraints.weighty = 1.0D;
+    constraints.gridwidth = width;
+    constraints.anchor = anchor;
     
-    protected <T extends Component> T add(final T component, final GridBagConstraints constraints, final int x, final int y, final int weight, final int width) {
-        return this.<T>add(component, constraints, x, y, weight, width, 10);
-    }
-    
-    protected <T extends Component> T add(final T component, final GridBagConstraints constraints, final int x, final int y, final int weight, final int width, final int anchor) {
-        constraints.gridx = x;
-        constraints.gridy = y;
-        constraints.weightx = weight;
-        constraints.weighty = 1.0;
-        constraints.gridwidth = width;
-        constraints.anchor = anchor;
-        this.add(component, constraints);
-        return component;
-    }
+    add(component, constraints);
+    return component;
+  }
 }

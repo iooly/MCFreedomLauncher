@@ -2,9 +2,11 @@ package com.mojang.authlib;
 
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 
-public interface AuthenticationService
+public abstract interface AuthenticationService
 {
-    UserAuthentication createUserAuthentication(Agent p0);
-    
-    MinecraftSessionService createMinecraftSessionService();
+  public abstract UserAuthentication createUserAuthentication(Agent paramAgent);
+  
+  public abstract MinecraftSessionService createMinecraftSessionService();
+  
+  public abstract GameProfileRepository createProfileRepository();
 }

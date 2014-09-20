@@ -1,20 +1,22 @@
 package com.mojang.authlib.exceptions;
 
-public class InvalidCredentialsException extends AuthenticationException
+public class InvalidCredentialsException
+  extends AuthenticationException
 {
-    public InvalidCredentialsException() {
-        super();
-    }
-    
-    public InvalidCredentialsException(final String message) {
-        super(message);
-    }
-    
-    public InvalidCredentialsException(final String message, final Throwable cause) {
-        super(message, cause);
-    }
-    
-    public InvalidCredentialsException(final Throwable cause) {
-        super(cause);
-    }
+  public InvalidCredentialsException() {}
+  
+  public InvalidCredentialsException(String message)
+  {
+    super(message);
+  }
+  
+  public InvalidCredentialsException(String message, Throwable cause)
+  {
+    super(message, cause);
+  }
+  
+  public InvalidCredentialsException(Throwable cause)
+  {
+    super(cause);
+  }
 }

@@ -1,20 +1,22 @@
 package com.mojang.authlib.exceptions;
 
-public class UserMigratedException extends InvalidCredentialsException
+public class UserMigratedException
+  extends InvalidCredentialsException
 {
-    public UserMigratedException() {
-        super();
-    }
-    
-    public UserMigratedException(final String message) {
-        super(message);
-    }
-    
-    public UserMigratedException(final String message, final Throwable cause) {
-        super(message, cause);
-    }
-    
-    public UserMigratedException(final Throwable cause) {
-        super(cause);
-    }
+  public UserMigratedException() {}
+  
+  public UserMigratedException(String message)
+  {
+    super(message);
+  }
+  
+  public UserMigratedException(String message, Throwable cause)
+  {
+    super(message, cause);
+  }
+  
+  public UserMigratedException(Throwable cause)
+  {
+    super(cause);
+  }
 }
