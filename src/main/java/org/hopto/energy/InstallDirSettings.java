@@ -34,6 +34,10 @@ public class InstallDirSettings {
             else
                 workingDirectory = changeDirInternal(frame, defaultWorkingDir, prop, file);
         }
+
+        if (!workingDirectory.exists()) {
+            workingDirectory.mkdirs();
+        }     
         return workingDirectory;
     }
 

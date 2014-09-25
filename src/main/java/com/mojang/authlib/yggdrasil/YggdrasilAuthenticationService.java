@@ -34,12 +34,15 @@ import java.util.UUID;
 import net.minecraft.launcher.Launcher;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class YggdrasilAuthenticationService
   extends HttpAuthenticationService
 {
   private final String clientToken;
   private final Gson gson;
+  private static final Logger LOGGER;
   
   public YggdrasilAuthenticationService(Proxy proxy, String clientToken)
   {
@@ -103,13 +106,13 @@ public class YggdrasilAuthenticationService
       throw new AuthenticationUnavailableException("Cannot contact authentication server", e);
     }
 	} else {
-		//UUID un = UUID.fromString("00000000-0000-0000-0000-000000000000");
-		String uuidn = "00000000-0000-0000-0000-000000000000";
+        LOGGER.info("Player's UUID is {}", getUUID(username));
+        String uuidn = getUUID(username);
 		 String jsonResult="{\n" +
                  "    \"accessToken\": \"68e6e1faeb3e442097e1b45d2b3a577e\",\n" +
-                 "    \"clientToken\": \"3ad0e077-0ea1-4a55-a89e-a65e189219f\",\n" +
+                 "    \"clientToken\": \""+getClientToken()+"\",\n" +
                  "    \"selectedProfile\": {\"name\":\""+username+"\",\"id\":\""+uuidn+"\"},\n" +
-                 "    \"availableProfiles\":[{\"name\":\""+username+"\",\"id\":\""+uuidn+"\"},{\"name\":\""+username+"\",\"id\":\""+uuidn+"\"}],\n" +
+                 "    \"availableProfiles\":[{\"name\":\""+username+"\",\"id\":\""+uuidn+"\"}],\n" +
                  "    \"error\": \"\",\n" +
                  "    \"errorMessage\":\"\"\n" +
                  "    \n" +
@@ -149,4 +152,45 @@ public class YggdrasilAuthenticationService
       return result;
     }
   }
+  public String getUUID(String username) throws AuthenticationException{
+      String uuid = "00000000-0000-0000-0000-000000000000";     
+      try
+      {
+          URL url = new URL("https://api.mojang.com/users/profiles/minecraft/" + username); 
+          String jsonResult =  performGetRequest(url);
+          Profile result = this.gson.fromJson(jsonResult, Profile.class);
+          if(result != null)
+          uuid = result.getId();
+      }
+      catch (IOException e)
+      {
+        throw new AuthenticationUnavailableException("Cannot contact authentication server", e);
+      }
+      catch (IllegalStateException e)
+      {
+        throw new AuthenticationUnavailableException("Cannot contact authentication server", e);
+      }
+      catch (JsonParseException e)
+      {
+        throw new AuthenticationUnavailableException("Cannot contact authentication server", e);
+      }     
+      return uuid;
+  }
+  public class Profile {
+        private String name;
+        private String id;
+        public String getName() {
+            return name;
+        }
+        public void setName(String name) {
+            this.name = name;
+        }
+        public String getId() {
+            return id;
+        }
+    }
+  static {
+      LOGGER = LogManager.getLogger();
+  }
+
 }

@@ -115,7 +115,7 @@ public class SwingUserInterface
   public void initializeFrame()
   {
     this.frame.getContentPane().removeAll();
-    this.frame.setTitle("Minecraft Launcher 1.5.2");
+    this.frame.setTitle("Minecraft Freedom Launcher 1.5.2");
     this.frame.setPreferredSize(new Dimension(900, 580));
     this.frame.setDefaultCloseOperation(2);
     
