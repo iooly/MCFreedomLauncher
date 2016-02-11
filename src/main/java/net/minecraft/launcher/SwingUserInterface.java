@@ -2,12 +2,10 @@ package net.minecraft.launcher;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
-import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.UserAuthentication;
 import com.mojang.launcher.OperatingSystem;
 import com.mojang.launcher.events.GameOutputLogProcessor;
 import com.mojang.launcher.updater.DownloadProgress;
-import com.mojang.launcher.updater.VersionManager;
 import com.mojang.launcher.versions.CompleteVersion;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -18,28 +16,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map;
-import java.util.concurrent.ThreadPoolExecutor;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import net.minecraft.launcher.game.MinecraftGameRunner;
-import net.minecraft.launcher.profile.AuthenticationDatabase;
 import net.minecraft.launcher.profile.Profile;
 import net.minecraft.launcher.profile.ProfileManager;
-import net.minecraft.launcher.ui.BottomBarPanel;
 import net.minecraft.launcher.ui.LauncherPanel;
-import net.minecraft.launcher.ui.bottombar.PlayButtonPanel;
 import net.minecraft.launcher.ui.popups.login.LogInPopup;
-import net.minecraft.launcher.ui.popups.login.LogInPopup.Callback;
 import net.minecraft.launcher.ui.tabs.CrashReportTab;
 import net.minecraft.launcher.ui.tabs.GameOutputTab;
-import net.minecraft.launcher.ui.tabs.LauncherTabPanel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -115,7 +105,7 @@ public class SwingUserInterface
   public void initializeFrame()
   {
     this.frame.getContentPane().removeAll();
-    this.frame.setTitle("Minecraft Freedom Launcher 1.5.2");
+    this.frame.setTitle("MC 启动器");
     this.frame.setPreferredSize(new Dimension(900, 580));
     this.frame.setDefaultCloseOperation(2);
     
@@ -295,7 +285,7 @@ public class SwingUserInterface
   public GameOutputLogProcessor showGameOutputTab(final MinecraftGameRunner gameRunner)
   {
     final SettableFuture<GameOutputLogProcessor> future = SettableFuture.create();
-    
+
     SwingUtilities.invokeLater(new Runnable()
     {
       public void run()
@@ -311,10 +301,10 @@ public class SwingUserInterface
     });
     return (GameOutputLogProcessor)Futures.getUnchecked(future);
   }
-  
+
   public String getTitle()
   {
-    return "Minecraft Launcher 1.5.2";
+    return "MC 启动器";
   }
   
   public JFrame getFrame()

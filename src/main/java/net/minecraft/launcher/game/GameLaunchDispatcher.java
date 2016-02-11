@@ -19,10 +19,13 @@ import net.minecraft.launcher.profile.AuthenticationDatabase;
 import net.minecraft.launcher.profile.LauncherVisibilityRule;
 import net.minecraft.launcher.profile.Profile;
 import net.minecraft.launcher.profile.ProfileManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class GameLaunchDispatcher
   implements GameRunnerListener
 {
+  private static final Logger LOGGER = LogManager.getLogger();
   private final net.minecraft.launcher.Launcher launcher;
   private final String[] additionalLaunchArgs;
   private final ReentrantLock lock = new ReentrantLock();
@@ -41,6 +44,7 @@ public class GameLaunchDispatcher
     Profile profile = profileManager.getProfiles().isEmpty() ? null : profileManager.getSelectedProfile();
     UserAuthentication user = profileManager.getSelectedUser() == null ? null : profileManager.getAuthDatabase().getByUUID(profileManager.getSelectedUser());
     if ((user == null) || (!user.isLoggedIn()) || (profile == null) || (this.launcher.getLauncher().getVersionManager().getVersions(profile.getVersionFilter()).isEmpty())) {
+      LOGGER.info("[getStatus] no profile or no versions, loading...");
       return PlayStatus.LOADING;
     }
     this.lock.lock();
@@ -48,9 +52,11 @@ public class GameLaunchDispatcher
     {
       PlayStatus localPlayStatus;
       if (this.downloadInProgress) {
+        LOGGER.info("[getStatus] DOWNLOADING.");
         return PlayStatus.DOWNLOADING;
       }
       if (this.instances.containsKey(user)) {
+        LOGGER.info("[getStatus] ALREADY_PLAYING.");
         return PlayStatus.ALREADY_PLAYING;
       }
     }
@@ -59,11 +65,14 @@ public class GameLaunchDispatcher
       this.lock.unlock();
     }
     if (user.getSelectedProfile() == null) {
+      LOGGER.info("[getStatus] CAN_PLAY_DEMO.");
       return PlayStatus.CAN_PLAY_DEMO;
     }
     if (user.canPlayOnline()) {
+      LOGGER.info("[getStatus] CAN_PLAY_ONLINE.");
       return PlayStatus.CAN_PLAY_ONLINE;
     }
+    LOGGER.info("[getStatus] CAN_PLAY_OFFLINE.");
     return PlayStatus.CAN_PLAY_OFFLINE;
   }
   
@@ -119,6 +128,9 @@ public class GameLaunchDispatcher
         if (lastVersionId != null) {
           syncInfo = GameLaunchDispatcher.this.launcher.getLauncher().getVersionManager().getVersionSyncInfo(lastVersionId);
         }
+
+        LOGGER.info("[play] syncInfo:." + syncInfo);
+
         if ((syncInfo == null) || (syncInfo.getLatestVersion() == null)) {
           syncInfo = (VersionSyncInfo)GameLaunchDispatcher.this.launcher.getLauncher().getVersionManager().getVersions(profile.getVersionFilter()).get(0);
         }

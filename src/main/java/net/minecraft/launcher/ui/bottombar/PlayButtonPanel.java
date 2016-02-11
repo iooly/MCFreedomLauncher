@@ -25,11 +25,14 @@ import net.minecraft.launcher.game.GameLaunchDispatcher.PlayStatus;
 import net.minecraft.launcher.profile.ProfileManager;
 import net.minecraft.launcher.profile.RefreshedProfilesListener;
 import net.minecraft.launcher.profile.UserChangedListener;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class PlayButtonPanel
   extends JPanel
   implements RefreshedVersionsListener, RefreshedProfilesListener, UserChangedListener
 {
+  private static final Logger LOGGER = LogManager.getLogger();
   private final Launcher minecraftLauncher;
   private final JButton playButton = new JButton("Play");
   private final JLabel demoHelpLink = new JLabel("(Why can I only play demo?)");
@@ -105,6 +108,9 @@ public class PlayButtonPanel
     this.playButton.setText(status.getName());
     this.playButton.setEnabled(status.canPlay());
     this.demoHelpLink.setVisible(status == GameLaunchDispatcher.PlayStatus.CAN_PLAY_DEMO);
+
+    LOGGER.info("check state: " + status);
+
     if (status == GameLaunchDispatcher.PlayStatus.DOWNLOADING)
     {
       GameInstanceStatus instanceStatus = this.minecraftLauncher.getLaunchDispatcher().getInstanceStatus();

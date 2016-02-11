@@ -2,15 +2,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.hopto.energy</groupId>
-  <artifactId>MCFreedomLauncher</artifactId>
+  <artifactId>MCFreedomLauncher2</artifactId>
   <version>1.5.2</version>
   <description>Minecraft Freedom Launcher-Free the New Minecraft Launcher with Energy!</description>
-   <url>http://energy0124.github.io/MCFreedomLauncher/</url>
-   <scm>
-     <connection>scm:git:git://github.com/Energy0124/MCFreedomLauncher.git</connection>
-     <developerConnection>scm:git:git@github.com:Energy0124/MCFreedomLauncher.git</developerConnection>
-     <url>https://github.com/Energy0124/MCFreedomLauncher</url>
-   </scm>
   <build>
     <resources>
       <resource>
@@ -106,12 +100,8 @@
                 <configuration>
                   <headerType>gui</headerType>
                   <stayAlive>false</stayAlive>
-                  <jar>
-                  F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.5.2.jar
-                  </jar>
-                  <outfile>
-                  F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.5.2.exe
-                  </outfile>
+                  <jar>C:\cygwin64\home\YeFeNg\code\github\iooly\MCFreedomLauncher\target/MCFreedomLauncher2-1.5.2.jar</jar>
+                  <outfile>C:\cygwin64\home\YeFeNg\code\github\iooly\MCFreedomLauncher\target/MCFreedomLauncher2-1.5.2.exe</outfile>
                   <classPath>
                     <mainClass>org.hopto.energy.Main</mainClass>
                     <addDependencies>false</addDependencies>
@@ -120,7 +110,7 @@
                   <jre>
                     <minVersion>1.6.0</minVersion>
                   </jre>
-                  <icon>E:\study\program\minecraft\MCFreedomLauncher/icon.ico</icon>
+                  <icon>C:\cygwin64\home\YeFeNg\code\github\iooly\MCFreedomLauncher/icon.ico</icon>
                   <versionInfo>
                     <fileVersion>1.0.0.0</fileVersion>
                     <txtFileVersion>1.0.0.0</txtFileVersion>
@@ -129,8 +119,8 @@
                     <fileDescription>${project.name}</fileDescription>
                     <productName>${project.name}</productName>
                     <copyright>${project.organization.name}, ${project.organization.url}</copyright>
-                    <internalName>MCFreedomLauncher</internalName>
-                    <originalFilename>MCFreedomLauncher.exe</originalFilename>
+                    <internalName>MCFreedomLauncher2</internalName>
+                    <originalFilename>MCFreedomLauncher2.exe</originalFilename>
                   </versionInfo>
                 </configuration>
               </execution>
@@ -157,17 +147,11 @@
                   <bundleName>${project.name}</bundleName>
                   <version>1.5.2</version>
                   <internetEnable>true</internetEnable>
-                   <mainClass>org.hopto.org.hopto.energy.Main</mainClass>
-                   <javaApplicationStub>
-                       F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta/src/main/resources/JavaApplicationStub
-                   </javaApplicationStub>
-                   <jvmVersion>1.6+</jvmVersion>
-                   <zipFile>
-                       F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.5.2.app.zip
-                   </zipFile>
-                   <diskImageFile>
-                       F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.5.2.dmg
-                   </diskImageFile>
+                  <mainClass>org.hopto.org.hopto.energy.Main</mainClass>
+                  <javaApplicationStub>C:\cygwin64\home\YeFeNg\code\github\iooly\MCFreedomLauncher/src/main/resources/JavaApplicationStub</javaApplicationStub>
+                  <jvmVersion>1.6+</jvmVersion>
+                  <zipFile>C:\cygwin64\home\YeFeNg\code\github\iooly\MCFreedomLauncher\target/MCFreedomLauncher2-1.5.2.app.zip</zipFile>
+                  <diskImageFile>C:\cygwin64\home\YeFeNg\code\github\iooly\MCFreedomLauncher\target/MCFreedomLauncher2-1.5.2.dmg</diskImageFile>
                   <iconFile>icon.icns</iconFile>
                 </configuration>
               </execution>
@@ -176,17 +160,11 @@
               <bundleName>${project.name}</bundleName>
               <version>1.5.2</version>
               <internetEnable>true</internetEnable>
-               <mainClass>org.hopto.org.hopto.energy.Main</mainClass>
-               <javaApplicationStub>
-                   F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta/src/main/resources/JavaApplicationStub
-               </javaApplicationStub>
-               <jvmVersion>1.6+</jvmVersion>
-               <zipFile>
-                   F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.5.2.app.zip
-               </zipFile>
-               <diskImageFile>
-                   F:\Users\Energy\Documents\GitHub\MCFreedomLauncher-Beta\target/MCFreedomLauncher-1.5.2.dmg
-               </diskImageFile>
+              <mainClass>org.hopto.org.hopto.energy.Main</mainClass>
+              <javaApplicationStub>C:\cygwin64\home\YeFeNg\code\github\iooly\MCFreedomLauncher/src/main/resources/JavaApplicationStub</javaApplicationStub>
+              <jvmVersion>1.6+</jvmVersion>
+              <zipFile>C:\cygwin64\home\YeFeNg\code\github\iooly\MCFreedomLauncher\target/MCFreedomLauncher2-1.5.2.app.zip</zipFile>
+              <diskImageFile>C:\cygwin64\home\YeFeNg\code\github\iooly\MCFreedomLauncher\target/MCFreedomLauncher2-1.5.2.dmg</diskImageFile>
               <iconFile>icon.icns</iconFile>
             </configuration>
           </plugin>
@@ -209,6 +187,15 @@
       <url>http://repo.spout.org</url>
     </pluginRepository>
   </pluginRepositories>
+  <dependencies>
+    <dependency>
+      <groupId>com.oracle</groupId>
+      <artifactId>javafx</artifactId>
+      <version>2.2</version>
+      <scope>system</scope>
+      <systemPath>C:\java\jdk1.8.0_25\jre/lib/ext/jfxrt.jar</systemPath>
+    </dependency>
+  </dependencies>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>

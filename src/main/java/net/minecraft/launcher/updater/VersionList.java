@@ -22,9 +22,12 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.launcher.game.MinecraftReleaseType;
 import net.minecraft.launcher.game.MinecraftReleaseTypeFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public abstract class VersionList
 {
+  private static final Logger LOGGER = LogManager.getLogger();
   protected final Gson gson;
   private final Map<String, Version> versionsByName = new HashMap();
   private final List<Version> versions = new ArrayList();
@@ -107,8 +110,8 @@ public abstract class VersionList
     throws IOException
   {
     clearCache();
-    
-    RawVersionList versionList = (RawVersionList)this.gson.fromJson(getContent("versions/versions.json"), RawVersionList.class);
+
+    RawVersionList versionList = this.gson.fromJson(getContent("versions/versions.json"), RawVersionList.class);
     for (Version version : versionList.getVersions())
     {
       this.versions.add(version);

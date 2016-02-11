@@ -10,6 +10,6 @@ public abstract interface MinecraftUserInterface
   public abstract void showOutdatedNotice();
   
   public abstract String getTitle();
-  
+
   public abstract GameOutputLogProcessor showGameOutputTab(MinecraftGameRunner paramMinecraftGameRunner);
 }

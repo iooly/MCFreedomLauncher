@@ -47,7 +47,7 @@ public class LauncherPanel
     JPanel result = new JPanel(new BorderLayout());
     
     this.tabPanel.getBlog().setPage("http://mcupdate.tumblr.com");
-    
+
     JPanel topWrapper = new JPanel();
     topWrapper.setLayout(new BorderLayout());
     topWrapper.add(this.tabPanel, "Center");
@@ -74,12 +74,12 @@ public class LauncherPanel
     this.loginPanel.setLayout(new GridBagLayout());
     return this.loginPanel;
   }
-  
+
   public LauncherTabPanel getTabPanel()
   {
     return this.tabPanel;
   }
-  
+
   public BottomBarPanel getBottomBar()
   {
     return this.bottomBar;

@@ -46,7 +46,7 @@ public class LocalVersionList
     throws IOException
   {
     clearCache();
-    
+    LOGGER.info("[refreshLocalVersions] baseVersionsDir: " + baseVersionsDir.getAbsolutePath());
     File[] files = this.baseVersionsDir.listFiles();
     if (files == null) {
       return;
